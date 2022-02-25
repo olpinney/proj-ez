@@ -1,0 +1,105 @@
+1645736631999	geckodriver	INFO	Listening on 127.0.0.1:43983
+1645736632446	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--headless" "--window-size=1920x1080" "--remote-debugging-port" "40131" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofileAWYZof"
+*** You are running in headless mode.
+1645737363824	geckodriver	INFO	Listening on 127.0.0.1:32819
+1645737363835	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--window-size=1920x1080" "--remote-debugging-port" "34369" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofileVeVNpk"
+Error: no DISPLAY environment variable specified
+1645737652799	geckodriver	INFO	Listening on 127.0.0.1:54101
+1645737652812	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--window-size=1920x1080" "--remote-debugging-port" "59225" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofileMxOcDG"
+Error: no DISPLAY environment variable specified
+1645737672072	geckodriver	INFO	Listening on 127.0.0.1:49723
+1645737672085	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--headless" "--window-size=1920x1080" "--remote-debugging-port" "34569" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofilefP1wGm"
+*** You are running in headless mode.
+[GFX1-]: glxtest: Unable to open a connection to the X server
+[GFX1-]: glxtest: libEGL initialize failed
+1645737672884	Marionette	INFO	Marionette enabled
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/user/21841/rust_mozprofilefP1wGm/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:34569/devtools/browser/0bf6b0d6-bf5e-4144-b0f8-03830732e18a
+1645737674968	Marionette	INFO	Listening on port 45833
+1645737675035	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript error: , line 0: uncaught exception: undefined
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/Hujgl23SVzI3rZSj4hNxUITd7BayDnfI5D3l6J-e8FI.js line 1 > eval line 3573 > eval line 1 > eval line 1 > eval, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://pagead2.googlesyndication.com/bg/Hujgl23SVzI3rZSj4hNxUITd7BayDnfI5D3l6J-e8FI.js line 1 > eval line 3573 > eval line 1 > eval line 1 > eval, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+JavaScript error: , line 0: TypeError: NetworkError when attempting to fetch resource.
+1645737701298	geckodriver	INFO	Listening on 127.0.0.1:40581
+1645737701312	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--headless" "--window-size=1920x1080" "--remote-debugging-port" "47827" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofileadeeNT"
+*** You are running in headless mode.
+[GFX1-]: glxtest: Unable to open a connection to the X server
+[GFX1-]: glxtest: libEGL initialize failed
+1645737701672	Marionette	INFO	Marionette enabled
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/user/21841/rust_mozprofileadeeNT/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:47827/devtools/browser/c2f96a80-3950-4d5a-b4f5-ac833c7df36a
+1645737703220	Marionette	INFO	Listening on port 41849
+1645737703357	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+1645737793183	geckodriver	INFO	Listening on 127.0.0.1:46767
+1645737793197	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--headless" "--window-size=1920x1080" "--remote-debugging-port" "36523" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofileqjmPlf"
+*** You are running in headless mode.
+[GFX1-]: glxtest: Unable to open a connection to the X server
+[GFX1-]: glxtest: libEGL initialize failed
+1645737793513	Marionette	INFO	Marionette enabled
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/user/21841/rust_mozprofileqjmPlf/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:36523/devtools/browser/6ff3424c-8ea2-443e-be30-ce5ce3d96e43
+1645737794993	Marionette	INFO	Listening on port 39543
+1645737795030	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+1645737821250	geckodriver	INFO	Listening on 127.0.0.1:37045
+1645737821263	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--headless" "--window-size=1920x1080" "--remote-debugging-port" "50755" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofileTf8qZh"
+*** You are running in headless mode.
+[GFX1-]: glxtest: Unable to open a connection to the X server
+[GFX1-]: glxtest: libEGL initialize failed
+1645737821648	Marionette	INFO	Marionette enabled
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/user/21841/rust_mozprofileTf8qZh/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:50755/devtools/browser/a6f08d60-468f-435f-8fcd-5fecfede6d95
+1645737823208	Marionette	INFO	Listening on port 36829
+1645737823300	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+1645737935275	geckodriver	INFO	Listening on 127.0.0.1:51953
+1645737935293	mozrunner::runner	INFO	Running command: "/usr/bin/firefox" "--marionette" "--headless" "--window-size=1920x1080" "--remote-debugging-port" "40571" "-no-remote" "-profile" "/tmp/user/21841/rust_mozprofilevFByNG"
+*** You are running in headless mode.
+[GFX1-]: glxtest: Unable to open a connection to the X server
+[GFX1-]: glxtest: libEGL initialize failed
+1645737935670	Marionette	INFO	Marionette enabled
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/user/21841/rust_mozprofilevFByNG/search.json.mozlz4", (void 0)))
+DevTools listening on ws://localhost:40571/devtools/browser/74f39df4-acb3-4da0-9d6d-79144ea7f3e9
+1645737937147	Marionette	INFO	Listening on port 34315
+1645737937226	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: WebGL warning: <Create>: WebglAllowWindowsNativeGl:false restricts context creation on this system.
+JavaScript warning: https://citizen.com/_next/static/chunks/2c796e83.9f159688c7c7b4212c56.js, line 1: Failed to create WebGL context: WebGL creation failed: 
+* WebglAllowWindowsNativeGl:false restricts context creation on this system. ()
+* Exhausted GL driver options. (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS)
