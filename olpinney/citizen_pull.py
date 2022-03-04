@@ -4,6 +4,7 @@ API requests from Citizen (https://citizen.com/explore)
 Author:Olivia Pinney 
 proj-ez
 '''
+from cmath import isnan
 import requests
 import bs4
 import csv
@@ -12,7 +13,7 @@ import sqlite3
 import os
 import pandas as pd
 
-COLS=['created_at', 'updated_at', 'title', 'address', 'city_code', 'location', 'neighborhood', 'categories', 'severity', '_geoloc', 'updates', 'objectID']
+import util
 
 
 #personal notes
@@ -54,68 +55,80 @@ else append
 '''
 
 # url_ext=["theft","shooting","assualt","knife"]
+# want to identify the businesses, churches, schools, hospitals, nursing homes that they are interacting with
+# car jacking, sexualizations
 
-PATH="olpinney/all.csv"
 
-def citizen_refresh(path,search=None):
-    #CSV_FILE_PATH=os.path.join(os.path.expanduser('~'),'olpinney', 'all.csv')
-    #os.getcwd()+CSV_FILE_PATH
-    results_json=get_incidents_chicago(limit=5)
-    #was limit sufficient 
+def citizen_refresh(search=None,table_name="citizen"):
+    '''
+    Update csv and sql per search term 
 
-    results_df = pd.DataFrame(all)
-    results_df.to_csv(path)
-    return results_df
+    Inputs:
+        search (str): optional filter term, default off
+        table_name (str): name of table in csv and sql
+   
+    ''' 
+    #customize per search term 
+    if search is not None:
+        table_name+=f"_{search}"
 
-def create_citizen_sql(c,cols,name):
-    try: 
-        col_count=len(cols)
-        #note that list type is not accepted 
-        create_query="CREATE TABLE "+name+" ("+", ".join(cols)+")"
-        c.execute(create_query)
+    c=util.get_cursor()
+
+    #pull in old data
+    try:
+        query= f"select updated_at from {table_name}" #specifically for the citizen table 
+        old_dates=c.execute(query).fetchall()
+        old_dates_cleaned=[int(date[0]) for date in old_dates]
+        max_old_date=max(old_dates_cleaned)
     except sqlite3.OperationalError:
-        print("table already exists")
-    return 
+        max_old_date=0
 
-    #.fetchall()
-    return 
+    #pull in new data
+    min_new_date=0
+    limit=20
+    limit_scaling=2
+    new_df=get_incidents_chicago(limit,search)
 
-def type_convert(arg): #because list type is not suported 
-    if isinstance(arg,list):
-        return str(arg)
-    else:
-        return arg
+    while max_old_date<min_new_date:
+        limit=limit*limit_scaling
 
-def insert_citizen_sql(incidents,name="citizen"):
-    connection = sqlite3.connect("all.sqlite3")
-    c = connection.cursor()
+        new_df=get_incidents_chicago(limit,search)
+        min_new_date=min(new_df['updated_at'])
 
-    cols=COLS
-    col_count=len(cols)
+    max_new_date=max(new_df['updated_at'])
 
-    x=[type(incidents[0][col]) for col in cols] #note that lists are creating an issue 
-    print(x)
-    create_citizen_sql(c,cols,name)
+    #save data
+    util.df_to_csv(new_df,f"data/{table_name}_{min_new_date}-{max_new_date}.csv")
+    util.insert_sql(new_df,table_name)
 
-    insert_query ="INSERT INTO "+name+" ("+", ".join(cols)+") VALUES ("+", ".join(["?"]*col_count)+")"
-
-    for i in incidents:
-        tup=(tuple([type_convert(i[col]) for col in cols]))
-        c.execute(insert_query, tup)
-
-
-def get_saved_data(path):
-    connection = sqlite3.connect("all.sqlite3")
-    c = connection.cursor()
-
-    #.fetchall()
-    return
-
+ 
 def get_incidents_chicago(limit=1,search=None):
+    '''
+    pulls incidents from citizen.com/explore specifically for chicago region
+
+    Inputs:
+        limit (int): how many incidents to pull, default of 1
+        search (str): optional filter term, default off 
+
+    Return:
+        citizen_dict (dict): dictionary of incident dictionaries
+    '''
     lat_long=(41.763221610079455,-87.75672119312583,41.93975658843911,-87.56055880687256)
     return get_incidents(lat_long,limit,search)
 
 def get_incidents(lat_long,limit,search=None):
+    '''
+    pulls incidents from citizen.com/explore 
+
+    Inputs:
+        lat_long (tuple): min latitude, min longitude, max latitude, max longitude integers
+        limit (int): how many incidents to pull
+        search (str): optional filter term, default off
+
+    Return:
+        citizen_dict (dict): dictionary of incident dictionaries
+    '''
+
     api_url="https://citizen.com/api/incident/search?insideBoundingBox[0]={}&insideBoundingBox[1]={}&insideBoundingBox[2]={}&insideBoundingBox[3]={}&limit={}"
     params=[entry for entry in lat_long]
     params.append(limit)
@@ -126,7 +139,10 @@ def get_incidents(lat_long,limit,search=None):
     url=api_url.format(*params)
     request=requests.get(url) #add max-age cache-control for refreshes
     citizen_dict=request.json()
-    return citizen_dict['hits']
+    
+    results_df=pd.DataFrame(citizen_dict['hits'])
+    return results_df
+
 
 if __name__ == "__main__":
     citizen_refresh()
