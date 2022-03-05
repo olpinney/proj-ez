@@ -27,6 +27,7 @@ def df_to_csv(df,file_path):
 
 
 
+
 def insert_sql(df,table_name,sql_path=SQL_PATH):
     '''
     insert latest data into sql table
@@ -42,7 +43,18 @@ def insert_sql(df,table_name,sql_path=SQL_PATH):
     df=df.astype('string') #needed this because list objects were giving me issues
     df.to_sql(table_name, connection, if_exists='append')
 
+def drop_table(table_name):
+    '''
+    drop table from SQL database
+    '''
+    c=get_cursor()
 
+    #delete old table
+    try:
+        query= f"drop table {table_name}"  
+        c.execute(query).fetchall()
+    except sqlite3.OperationalError:
+        print("table already dropped")
 
 def get_cursor(sql_path=SQL_PATH):
     '''
@@ -59,6 +71,18 @@ def get_cursor(sql_path=SQL_PATH):
     connection = sqlite3.connect(sql_path)
 
     return connection.cursor()
+
+def get_connection(sql_path=SQL_PATH):
+    '''
+    get connection for sql document
+
+    Inputs:
+        path (str): file path to sql file
+
+    Returns:
+        (connection): connection to sql  
+    '''
+    return sqlite3.connect(sql_path)
 
     
 # def create_table_sql(cursor,cols,name):
