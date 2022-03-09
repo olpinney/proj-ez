@@ -84,6 +84,34 @@ def get_connection(sql_path=SQL_PATH):
     '''
     return sqlite3.connect(sql_path)
 
+def pull_recent(table_name, date_col):
+    '''
+    pull data from citizen until SQL filled back to last saved incident
+    
+    Inputs
+        table_name (str): name of table in sql
+        date_col (str): name of date column in sql table
+
+    Returns
+        date/time of most recent entry in dataframe in "%Y-%m-%dT%H:%M:%S" format
+    '''
+    c=util.get_cursor()
+
+    #pull in old data
+    try:
+        query= f"select {date_col} from {table_name}" #specifically for the citizen table 
+        old_dates=c.execute(query).fetchall()
+        if table_name == 'citizen':
+            old_dates_cleaned=[int(date[0]) for date in old_dates]
+            max_old_date=max(old_dates_cleaned)
+        else:
+            max_old_date=max(old_dates)[0][:19]
+        
+    except sqlite3.OperationalError:
+        max_old_date=0
+    
+    return max_old_date
+
     
 # def create_table_sql(cursor,cols,name):
 #     '''
