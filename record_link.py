@@ -4,6 +4,7 @@ from geopy.geocoders import Nominatim as nom
 from geopy import distance
 import datetime
 import sqlite3
+import ast
 
 # import geopy as geo
 # import geopandas as geopd
@@ -27,7 +28,8 @@ def get_header(cursor):
 
 #created connection
 connection = sqlite3.connect("proj_ez.sqlite3")
-c = connection.cursor()
+citi = connection.cursor()
+chi = connection.cursor()
 
 #REMOVE LIMIT 10
 citizen_query = '''
@@ -51,12 +53,11 @@ chi_query = '''
     LIMIT 10
     '''
 
-citizen_query = (c.execute(citizen_query).fetchall())
-chi_query = (c.execute(chi_query).fetchall())
+citizen_query = (citi.execute(citizen_query).fetchall())
+chi_query = (chi.execute(chi_query).fetchall())
 
-citizen_df = pd.DataFrame(citizen_query, columns=get_header(c))
-chi_df = pd.DataFrame(chi_query, columns=get_header(c))
-
+citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
+chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
 
 #get citizen lat/long column to two columns to match with chigao database
 #converts from list of str to list of tuples nd splits 
@@ -109,7 +110,9 @@ def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 2):
 
 def standard_date_time(df, date_col = 'created_at'):
     """
-    Recieves 13-digit unix time/date format from citizen
+    Recieves 13-digit unix time/date format from citizen. 
+    This function updates the dataframe in-place. It updates
+    the "created_at" field and replaces it with a date time object
     """
     date_objs = [] 
     for index, row in df.iterrows():
@@ -122,7 +125,7 @@ def standard_date_time(df, date_col = 'created_at'):
     return df
 
 
-standard_date_time(citizen_df, date_col = 'created_at')
+# standard_date_time(citizen_df, date_col = 'created_at')
 
 
 
