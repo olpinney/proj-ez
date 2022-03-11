@@ -33,7 +33,7 @@ def download_relevant_data(file_name, start_date, end_date):
                                   'between%20%27{start}%27%20and'.format(start = start_date)+ \
                                   '%20%27{end}%27'.format(end = end_date), params).json()
     df = pd.DataFrame.from_dict(response)
-    #df.to_csv('crime_data_folder/'+ file_name, encoding='utf-8', index=False)
+    df.to_csv('data/'+ file_name, encoding='utf-8', index=False)
     os += 50
     #output to sql
     util.insert_sql(df,'Chi_Data_Portal',sql_path=SQL_PATH)
@@ -46,7 +46,7 @@ def download_relevant_data(file_name, start_date, end_date):
                                 'between%20%27{start}%27%20and'.format(start = start_date)+ \
                                 '%20%27{end}%27'.format(end = end_date), params).json()
         df = pd.DataFrame.from_dict(response)
-        #df.to_csv('crime_data_folder/'+ file_name, encoding='utf-8', index=False, mode = 'a')
+        df.to_csv('data/'+ file_name, encoding='utf-8', index=False, mode = 'a')
         os += 50
         util.insert_sql(df,'Chi_Data_Portal',sql_path=SQL_PATH)
         
@@ -61,3 +61,4 @@ def call_api():
     #set to run from date off last entry until today
     last_updated = util.last_updated('Chi_Data_Portal', 'date')
     wrapper(last_updated,datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+

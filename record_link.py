@@ -62,13 +62,24 @@ chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
 #get citizen lat/long column to two columns to match with chigao database
 #converts from list of str to list of tuples nd splits 
 #turns out location is lat/long in one so can use that if prefet
-lst = citizen_df['lat_long'].tolist()
-tup_lst = []
-for s in lst:
-    tup_lst.append(ast.literal_eval(s))
-citizen_df['lat_long'] = tup_lst
+def clean_lat_long(df, source):
+    """
+    if df citizen take lat/long string column to tuple
+    if df chi lat/long columns zipped to tulpe
 
-chi_df['lat_long'] = list(zip(chi_df.latitude, chi_df.longitude))
+    Inputs:
+        df (pandas df): dataframe to update lat/long for
+        source (str): citizen or chi
+    Returns: None (updates in place)
+    """
+    if source == 'citizen':
+        lst = citizen_df['lat_long'].tolist()
+        tup_lst = []
+        for s in lst:
+            tup_lst.append(ast.literal_eval(s))
+        citizen_df['lat_long'] = tup_lst
+    elif source == 'chi':
+        chi_df['lat_long'] = list(zip(chi_df.latitude, chi_df.longitude))
 
 
 def read_csv_file(filename):
