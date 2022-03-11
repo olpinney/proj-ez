@@ -66,7 +66,9 @@ lst = citizen_df['lat_long'].tolist()
 tup_lst = []
 for s in lst:
     tup_lst.append(ast.literal_eval(s))
-citizen_df[['latitude', 'longitude']] = tup_lst
+citizen_df['lat_long'] = tup_lst
+
+chi_df['lat_long'] = list(zip(chi_df.latitude, chi_df.longitude))
 
 
 def read_csv_file(filename):
@@ -108,21 +110,38 @@ def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 2):
         return True
     return False
 
-def standard_date_time(df, date_col = 'created_at'):
+def standard_date_time(df, source):
     """
     Recieves 13-digit unix time/date format from citizen. 
     This function updates the dataframe in-place. It updates
     the "created_at" field and replaces it with a date time object
+
+    Inputs:
+        df
+        data_attributes (tuple)
+
+    Returns (pandas dataframe) updates date col in place and 
+        replaces with a datetime object
     """
     date_objs = [] 
     for index, row in df.iterrows():
-        timestamp = row[date_col]
+        timestamp = row['date']
         print(timestamp)
-        timestamp = timestamp / 1000
-        date_obj = datetime.datetime.fromtimestamp(timestamp)
+        if source == "citizen":
+            timestamp = int(timestamp) / 1000
+            date_obj = datetime.datetime.fromtimestamp(timestamp)
+        elif source == "chi":
+            date_obj = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
         date_objs.append(date_obj)
-    df[date_col] = date_objs
+
+    df['date'] = date_objs
     return df
+
+def link_records(chi, citizen, time_lower_bound, time_upper_bound):
+    """
+    """
+    
+
 
 
 # standard_date_time(citizen_df, date_col = 'created_at')

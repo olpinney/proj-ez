@@ -95,7 +95,7 @@ def last_updated(table_name, date_col):
     Returns
         date/time of most recent entry in dataframe in "%Y-%m-%dT%H:%M:%S" format
     '''
-    c=util.get_cursor()
+    c = get_cursor()
 
     #pull in old data
     try:
