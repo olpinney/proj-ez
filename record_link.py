@@ -41,7 +41,6 @@ def go():
             lat_long as lat_long, 
             categories
         FROM citizen
-        LIMIT 10
         '''
 
     chi_query = '''
@@ -52,7 +51,6 @@ def go():
             primary_type,	
             description
         FROM Chi_Data_Portal
-        LIMIT 10
         '''
 
     citizen_query = (citi.execute(citizen_query).fetchall())
@@ -64,8 +62,8 @@ def go():
     clean_lat_long(citizen_df, 'citizen')
     clean_lat_long(chi_df, 'chi')
 
-    standard_date_time(citizen_df, 'citizen')
-    standard_date_time(chi_df, 'chi')
+    # standard_date_time(citizen_df, 'citizen')
+    # standard_date_time(chi_df, 'chi')
     
     return citizen_df, chi_df
 
@@ -149,20 +147,16 @@ def standard_date_time(df, source):
     time_objs = []
     for index, row in df.iterrows():
         timestamp = row['date']
-        print(timestamp)
         if source == "citizen":
             timestamp = int(timestamp) / 1000
             dt_obj = datetime.datetime.fromtimestamp(timestamp)
         elif source == "chi":
             dt_obj = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
-        dt_objs.append(dt_obj)
-        cal_date = dt_obj.date()
+        day_obj = dt_obj.date()
+        dt_objs.append(day_obj)
         time = dt_obj.time()
-        dt_objs.append(dt_obj)
-        cal_objs.append(cal_date)
         time_objs.append(time)
     df['date'] = dt_objs
-    df['calendar day'] = cal_objs
     df['time'] = time_objs
     return df
 
