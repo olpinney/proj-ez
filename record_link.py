@@ -5,6 +5,8 @@ from geopy import distance
 import datetime
 import sqlite3
 import ast
+import numpy as np
+import csv
 
 # import geopy as geo
 # import geopandas as geopd
@@ -36,10 +38,10 @@ def go():
     #REMOVE LIMIT 10
     citizen_query = '''
         SELECT 
-            title, 
+            title as description,
             created_at as date, 
             lat_long as lat_long, 
-            categories
+            categories as primary_type
         FROM citizen
         '''
 
@@ -62,8 +64,8 @@ def go():
     clean_lat_long(citizen_df, 'citizen')
     clean_lat_long(chi_df, 'chi')
 
-    # standard_date_time(citizen_df, 'citizen')
-    # standard_date_time(chi_df, 'chi')
+    standard_date_time(citizen_df, 'citizen')
+    standard_date_time(chi_df, 'chi')
     
     return citizen_df, chi_df
 
@@ -160,16 +162,34 @@ def standard_date_time(df, source):
     df['time'] = time_objs
     return df
 
-def link_records(chi, citizen, time_lower_bound, time_upper_bound):
+def link_records(chi, citizen, time_lower_bound=2, time_upper_bound=2, \
+        dist_lower_bound = 0, dist_upper_bound = 2):
     """
     """
-    with open(output_filename, "w") as file:
+
+    if len(chi) < len(citizen):
+        smaller_df = chi
+        larger_df = citizen
+    else:
+        smaller_df = citizen
+        larger_df = chi
+
+
+    with open('match_file.csv', "w") as file:
         spamwriter = csv.writer(file, delimiter = ",")
-        chi.eq(citizen)
-        for month in range(12):
-            for chi_row in chi.itertuples():
-                for citizen_row in citizen.itertuples():
-                    citi_date_obj, chi_date_obj = citizen_row['date'], chi_row['date']
+        for _,small_row in smaller_df.iterrows():
+            filtered_df = larger_df.loc[larger_df['date'] == smaller_df['date']]
+            #filtered_df = np.where(larger_df['date'] == small_row['date'])
+            print(type(filtered_df))
+            print(filtered_df)
+            for _,large_row in filtered_df.iterrows():
+                #fix time to handle edge cases
+                if small_row['time'] >= large_row['time'].hour - time_lower_bound and \
+                    small_row['time'] <= large_row['time'].hour + time_upper_bound:
+                    match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
+                    if match:
+                        spamwriter.writerow(small_row, large_row)
+
                 
                 
 
