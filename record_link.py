@@ -3,6 +3,7 @@ import pandas as pd
 from geopy.geocoders import Nominatim as nom
 from geopy import distance
 import datetime
+import sqlite3
 
 # import geopy as geo
 # import geopandas as geopd
@@ -28,23 +29,43 @@ def get_header(cursor):
 connection = sqlite3.connect("proj_ez.sqlite3")
 c = connection.cursor()
 
+#REMOVE LIMIT 10
 citizen_query = '''
-       SELECT title, created_at as Date, lat_long as lat_long, 
-       title, catagories
-       FROM citizen
-       LIMIT 10
+    SELECT 
+        title, 
+        created_at as date, 
+        lat_long as lat_long, 
+        categories
+    FROM citizen
+    LIMIT 10
     '''
 
-query = (c.execute(citizen_query).fetchall())
-#converts to dataframe
-df = pd.DataFrame(query, columns=get_header(c))
+chi_query = '''
+    SELECT 
+        date,
+        latitude, 
+        longitude, 
+        primary_type,	
+        description
+    FROM Chi_Data_Portal
+    LIMIT 10
+    '''
+
+citizen_query = (c.execute(citizen_query).fetchall())
+chi_query = (c.execute(chi_query).fetchall())
+
+citizen_df = pd.DataFrame(citizen_query, columns=get_header(c))
+chi_df = pd.DataFrame(chi_query, columns=get_header(c))
+
+
+#get citizen lat/long column to two columns to match with chigao database
 #converts from list of str to list of tuples nd splits 
-#lat/long column to two columns to match with chigao database
-lst = df['lat_long'].tolist()
+#turns out location is lat/long in one so can use that if prefet
+lst = citizen_df['lat_long'].tolist()
 tup_lst = []
 for s in lst:
     tup_lst.append(ast.literal_eval(s))
-df[['LATITUDE', 'LONGITUDE']] = tup_lst
+citizen_df[['latitude', 'longitude']] = tup_lst
 
 
 def read_csv_file(filename):
@@ -101,7 +122,7 @@ def standard_date_time(df, date_col = 'created_at'):
     return df
 
 
-
+standard_date_time(citizen_df, date_col = 'created_at')
 
 
 

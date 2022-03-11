@@ -84,7 +84,7 @@ def get_connection(sql_path=SQL_PATH):
     '''
     return sqlite3.connect(sql_path)
 
-def pull_recent(table_name, date_col):
+def last_updated(table_name, date_col):
     '''
     pull data from citizen until SQL filled back to last saved incident
     
