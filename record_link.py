@@ -26,38 +26,48 @@ def get_header(cursor):
         header.append(s)
     return header
 
-#created connection
-connection = sqlite3.connect("proj_ez.sqlite3")
-citi = connection.cursor()
-chi = connection.cursor()
+def go():
 
-#REMOVE LIMIT 10
-citizen_query = '''
-    SELECT 
-        title, 
-        created_at as date, 
-        lat_long as lat_long, 
-        categories
-    FROM citizen
-    LIMIT 10
-    '''
+    #created connection
+    connection = sqlite3.connect("proj_ez.sqlite3")
+    citi = connection.cursor()
+    chi = connection.cursor()
 
-chi_query = '''
-    SELECT 
-        date,
-        latitude, 
-        longitude, 
-        primary_type,	
-        description
-    FROM Chi_Data_Portal
-    LIMIT 10
-    '''
+    #REMOVE LIMIT 10
+    citizen_query = '''
+        SELECT 
+            title, 
+            created_at as date, 
+            lat_long as lat_long, 
+            categories
+        FROM citizen
+        LIMIT 10
+        '''
 
-citizen_query = (citi.execute(citizen_query).fetchall())
-chi_query = (chi.execute(chi_query).fetchall())
+    chi_query = '''
+        SELECT 
+            date,
+            latitude, 
+            longitude, 
+            primary_type,	
+            description
+        FROM Chi_Data_Portal
+        LIMIT 10
+        '''
 
-citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
-chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
+    citizen_query = (citi.execute(citizen_query).fetchall())
+    chi_query = (chi.execute(chi_query).fetchall())
+
+    citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
+    chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
+
+    clean_lat_long(citizen_df, 'citizen')
+    clean_lat_long(chi_df, 'chi')
+
+    standard_date_time(citizen_df, 'citizen')
+    standard_date_time(chi_df, 'chi')
+    
+    return citizen_df, chi_df
 
 #get citizen lat/long column to two columns to match with chigao database
 #converts from list of str to list of tuples nd splits 
@@ -73,13 +83,13 @@ def clean_lat_long(df, source):
     Returns: None (updates in place)
     """
     if source == 'citizen':
-        lst = citizen_df['lat_long'].tolist()
+        lst = df['lat_long'].tolist()
         tup_lst = []
         for s in lst:
             tup_lst.append(ast.literal_eval(s))
-        citizen_df['lat_long'] = tup_lst
+        df['lat_long'] = tup_lst
     elif source == 'chi':
-        chi_df['lat_long'] = list(zip(chi_df.latitude, chi_df.longitude))
+        df['lat_long'] = list(zip(df.latitude, df.longitude))
 
 
 def read_csv_file(filename):
@@ -134,18 +144,26 @@ def standard_date_time(df, source):
     Returns (pandas dataframe) updates date col in place and 
         replaces with a datetime object
     """
-    date_objs = [] 
+    dt_objs = []
+    cal_objs = []
+    time_objs = []
     for index, row in df.iterrows():
         timestamp = row['date']
         print(timestamp)
         if source == "citizen":
             timestamp = int(timestamp) / 1000
-            date_obj = datetime.datetime.fromtimestamp(timestamp)
+            dt_obj = datetime.datetime.fromtimestamp(timestamp)
         elif source == "chi":
-            date_obj = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
-        date_objs.append(date_obj)
-
-    df['date'] = date_objs
+            dt_obj = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        dt_objs.append(dt_obj)
+        cal_date = dt_obj.date()
+        time = dt_obj.time()
+        dt_objs.append(dt_obj)
+        cal_objs.append(cal_date)
+        time_objs.append(time)
+    df['date'] = dt_objs
+    df['calendar day'] = cal_objs
+    df['time'] = time_objs
     return df
 
 def link_records(chi, citizen, time_lower_bound, time_upper_bound):
@@ -153,8 +171,12 @@ def link_records(chi, citizen, time_lower_bound, time_upper_bound):
     """
     with open(output_filename, "w") as file:
         spamwriter = csv.writer(file, delimiter = ",")
-        for chi_row in chi.itertuples():
-            for citizen_row in citizen.itertuples():
+        chi.eq(citizen)
+        for month in range(12):
+            for chi_row in chi.itertuples():
+                for citizen_row in citizen.itertuples():
+                    citi_date_obj, chi_date_obj = citizen_row['date'], chi_row['date']
+                
                 
 
 
