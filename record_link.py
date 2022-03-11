@@ -140,7 +140,11 @@ def standard_date_time(df, source):
 def link_records(chi, citizen, time_lower_bound, time_upper_bound):
     """
     """
-    
+    with open(output_filename, "w") as file:
+        spamwriter = csv.writer(file, delimiter = ",")
+        for chi_row in chi.itertuples():
+            for citizen_row in citizen.itertuples():
+                
 
 
 
