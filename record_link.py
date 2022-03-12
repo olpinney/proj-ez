@@ -129,7 +129,7 @@ def get_lat_long():
     location = locator.geocode("3400 W CHICAGO AVE 60651")
     return location
 
-def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 2):
+def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 4):
     """
     takes in two lat/long tuples and finds the geodesic distance between the 
     two points. Uses lower and upper bound limits to determine likelihood of
@@ -172,20 +172,22 @@ def standard_date_time(df, source):
     df['time'] = time_objs
     return df
 
-def link_records(chi, citizen, time_lower_bound=2, time_upper_bound=2, \
+def link_records(chi, citizen, time_lower_bound=5, time_upper_bound=5, \
         dist_lower_bound = 0, dist_upper_bound = 5):
     """
     """
     if len(chi) < len(citizen):
         smaller_df = chi
         suffix = '_chi'
+        suffic2 ='_citizen'
         larger_df = citizen
     else:
         smaller_df = citizen
         suffix = '_citizen'
+        suffix2 = '_chi'
         larger_df = chi
 
-    header = list(smaller_df.add_suffix(suffix).columns) + list(larger_df.columns)
+    header = list(smaller_df.add_suffix(suffix).columns) + list(larger_df.add_suffix(suffix2).columns)
 
     with open('match_file.csv', "w") as file:
         spamwriter = csv.writer(file, delimiter = ",")
@@ -195,19 +197,19 @@ def link_records(chi, citizen, time_lower_bound=2, time_upper_bound=2, \
             #filtered_df = np.where(larger_df['date'] == small_row['date'])
             for _,large_row in filtered_df.iterrows():
                 #fix time to handle edge cases
-                if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
-                    small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
+                # if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
+                #     small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
                     # print(type(large_row['lat_long']))
-                    match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
+                match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
                     # print("found time bound with this row")
                     # print("******************************************************")
                     # print("small", small_row) 
                     # print("large", large_row)
-                    if match:
-                        print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
-                        print("there is a match")
-                        output = pd.concat([small_row, large_row], axis=0)
-                        spamwriter.writerow(output)
+                if match:
+                    print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
+                    print("there is a match")
+                    output = pd.concat([small_row, large_row], axis=0)
+                    spamwriter.writerow(output)
 
                 
                 
