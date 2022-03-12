@@ -26,8 +26,6 @@ def df_to_csv(df,file_path):
         df.to_csv(file,index=True,header=header_bool,line_terminator='\n')
 
 
-
-
 def insert_sql(df,table_name,sql_path=SQL_PATH):
     '''
     insert latest data into sql table
