@@ -57,7 +57,7 @@ def go():
         '''
     mock_query = '''
         SELECT
-            house_num,
+            cast(house_num as int) as house_num,
             street_name,
             street_type,
             street_intersection,
@@ -73,6 +73,11 @@ def go():
     citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
     chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
     mock_df = pd.DataFrame(mock_query, columns=get_header(mock))
+
+    #update mock_df house num to int to str
+    mock_df['house_num'] = mock_df.house_num.fillna(0)
+    mock_df['house_num'] = mock_df.house_num.astype(int)
+    mock_df['house_num'] = mock_df.house_num.astype(str)
 
     clean_lat_long(citizen_df, 'citizen')
     clean_lat_long(chi_df, 'chi')
