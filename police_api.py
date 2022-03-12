@@ -1,10 +1,14 @@
 import string
 import requests
 import pandas as pd
-from datetime import datetime
+#from datetime import datetime
+import datetime
 import time
 import csv
+import util
 
+
+SQL_PATH="proj_ez.sqlite3"
 
 def download_relevant_data(file_name, start_date, end_date):
     '''
@@ -29,8 +33,10 @@ def download_relevant_data(file_name, start_date, end_date):
                                   'between%20%27{start}%27%20and'.format(start = start_date)+ \
                                   '%20%27{end}%27'.format(end = end_date), params).json()
     df = pd.DataFrame.from_dict(response)
-    df.to_csv('crime_data_folder/'+ file_name, encoding='utf-8', index=False)
+    df.to_csv('data/'+ file_name, encoding='utf-8', index=False)
     os += 50
+    #output to sql
+    util.insert_sql(df,'Chi_Data_Portal',sql_path=SQL_PATH)
     while len(response) >= 50:
         print(start_date)
         print(end_date)
@@ -40,11 +46,9 @@ def download_relevant_data(file_name, start_date, end_date):
                                 'between%20%27{start}%27%20and'.format(start = start_date)+ \
                                 '%20%27{end}%27'.format(end = end_date), params).json()
         df = pd.DataFrame.from_dict(response)
-        print(df)
-        #df = df_cleaner(df)
-            # writing the data rows
-        df.to_csv('crime_data_folder/'+ file_name, encoding='utf-8', index=False, mode = 'a')
+        df.to_csv('data/'+ file_name, encoding='utf-8', index=False, mode = 'a')
         os += 50
+        util.insert_sql(df,'Chi_Data_Portal',sql_path=SQL_PATH)
         
 def wrapper(start_date, end_date):
   intervals = pd.date_range(start_date,end_date)
@@ -52,4 +56,9 @@ def wrapper(start_date, end_date):
     print("pulling from {i} to {j}".format(i = intervals[i], j = intervals[i+1]))
     download_relevant_data('crime_data'+'{}'.format(i), intervals[i], intervals[i+1])
 
-wrapper("2022-01-01T00:00:00","2022-02-28T00:00:00")
+
+def call_api():
+    #set to run from date off last entry until today
+    last_updated = util.last_updated('Chi_Data_Portal', 'date')
+    wrapper(last_updated,datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+

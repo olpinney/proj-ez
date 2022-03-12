@@ -3,6 +3,10 @@ import pandas as pd
 from geopy.geocoders import Nominatim as nom
 from geopy import distance
 import datetime
+import sqlite3
+import ast
+import numpy as np
+import csv
 
 # import geopy as geo
 # import geopandas as geopd
@@ -24,27 +28,84 @@ def get_header(cursor):
         header.append(s)
     return header
 
-#created connection
-connection = sqlite3.connect("proj_ez.sqlite3")
-c = connection.cursor()
+def go():
+    """
+    Runs entire py file
+    """
+    #created connection
+    connection = sqlite3.connect("proj_ez.sqlite3")
+    citi = connection.cursor()
+    chi = connection.cursor()
 
-citizen_query = '''
-       SELECT title, created_at as Date, lat_long as lat_long, 
-       title, catagories
-       FROM citizen
-       LIMIT 10
-    '''
+    citizen_query = '''
+        SELECT 
+            title as description,
+            created_at as date, 
+            lat_long as lat_long, 
+            categories as primary_type
+        FROM citizen
+        '''
+    chi_query = '''
+        SELECT 
+            date,
+            latitude, 
+            longitude, 
+            primary_type,	
+            description
+        FROM Chi_Data_Portal
+        '''
+    citizen_query = (citi.execute(citizen_query).fetchall())
+    chi_query = (chi.execute(chi_query).fetchall())
 
-query = (c.execute(citizen_query).fetchall())
-#converts to dataframe
-df = pd.DataFrame(query, columns=get_header(c))
-#converts from list of str to list of tuples nd splits 
-#lat/long column to two columns to match with chigao database
-lst = df['lat_long'].tolist()
-tup_lst = []
-for s in lst:
-    tup_lst.append(ast.literal_eval(s))
-df[['LATITUDE', 'LONGITUDE']] = tup_lst
+    citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
+    chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
+
+    clean_lat_long(citizen_df, 'citizen')
+    clean_lat_long(chi_df, 'chi')
+
+    standard_date_time(citizen_df, 'citizen')
+    standard_date_time(chi_df, 'chi')
+
+    print("length before drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
+    chi_df = chi_df.drop_duplicates(keep = 'first')
+    citizen_df = citizen_df.drop_duplicates(keep = 'first')
+    print("length after drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
+
+    link_records(citizen_df, chi_df)
+    print_date_timeframes(citizen_df, chi_df)
+    return citizen_df, chi_df
+
+def print_date_timeframes(citizen_df, chi_df):
+    """
+    Call to print out the duration of each dataframe
+    """
+    earliest_match_date = max(chi_df['date'].min(), citizen_df['date'].min())
+    latest_match_date = min(chi_df['date'].max(), citizen_df['date'].max())
+    print("Chicago Data Portal:", "Start", chi_df['date'].min(),  "End", chi_df['date'].max())
+    print("Citizen:", "Start", citizen_df['date'].min(), "End", citizen_df['date'].max())
+    print("Overlap", earliest_match_date, "to", latest_match_date)
+    print("Num days of overlap", latest_match_date - earliest_match_date)
+
+
+def clean_lat_long(df, source):
+    """
+    if df citizen take lat/long string column to tuple
+    if df chi lat/long columns zipped to tulpe
+
+    Inputs:
+        df (pandas df): dataframe to update lat/long for
+        source (str): citizen or chi
+    Returns: None (updates in place)
+    """
+    if source == 'citizen':
+        lst = df['lat_long'].tolist()
+        tup_lst = []
+        for s in lst:
+            tup_lst.append(ast.literal_eval(s))
+        df['lat_long'] = tup_lst
+    elif source == 'chi':
+        df.astype({'latitude': 'float64', 'longitude': 'float64'})
+        df['lat_long'] = list(zip(df.latitude, df.longitude))
 
 
 def read_csv_file(filename):
@@ -60,9 +121,8 @@ def read_csv_file(filename):
                                 cols_to_keep)
     return df
 
-# geopandas will need BLOCK + ZIPCODE to calculate lat / lon
-# Chicago API and Citizen data already provided lat / lon
-
+# currently not using this... chicago and citizen have lat / long
+# keep for mock data
 def get_lat_long():
     """
     converts block and zipcode into a lat / lon coordinate
@@ -75,7 +135,7 @@ def get_lat_long():
     location = locator.geocode("3400 W CHICAGO AVE 60651")
     return location
 
-def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 2):
+def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 4):
     """
     takes in two lat/long tuples and finds the geodesic distance between the 
     two points. Uses lower and upper bound limits to determine likelihood of
@@ -86,23 +146,73 @@ def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 2):
         return True
     return False
 
-def standard_date_time(df, date_col = 'created_at'):
+def standard_date_time(df, source):
     """
-    Recieves 13-digit unix time/date format from citizen
+    Recieves 13-digit unix time/date format from citizen. 
+    This function updates the dataframe in-place. It updates
+    the "created_at" field and replaces it with a date time object
+
+    Inputs:
+        df
+        data_attributes (tuple)
+
+    Returns (pandas dataframe) updates date col in place and 
+        replaces with a datetime object
     """
-    date_objs = [] 
+    dt_objs = []
+    time_objs = []
     for index, row in df.iterrows():
-        timestamp = row[date_col]
-        print(timestamp)
-        timestamp = timestamp / 1000
-        date_obj = datetime.datetime.fromtimestamp(timestamp)
-        date_objs.append(date_obj)
-    df[date_col] = date_objs
+        timestamp = row['date']
+        if source == "citizen":
+            timestamp = int(timestamp) / 1000
+            dt_obj = datetime.datetime.fromtimestamp(timestamp)
+        elif source == "chi":
+            dt_obj = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        day_obj = dt_obj.date()
+        dt_objs.append(day_obj)
+        time = dt_obj.time()
+        time_objs.append(time)
+    df['date'] = dt_objs
+    df['time'] = time_objs
     return df
 
+def link_records(citizen, chi, time_lower_bound=5, time_upper_bound=5, \
+        dist_lower_bound = 0, dist_upper_bound = 5):
+    """
+    """
+    if len(chi) < len(citizen):
+        smaller_df = chi
+        suffix = '_chi'
+        suffix2 ='_citizen'
+        larger_df = citizen
+    else:
+        smaller_df = citizen
+        suffix = '_citizen'
+        suffix2 = '_chi'
+        larger_df = chi
 
+    header = list(smaller_df.add_suffix(suffix).columns) + list(larger_df.add_suffix(suffix2).columns)
 
-
+    with open('match_file.csv', "w") as file:
+        spamwriter = csv.writer(file, delimiter = ",")
+        spamwriter.writerow(header)
+        for _,small_row in smaller_df.iterrows():
+            filtered_df = larger_df.loc[larger_df['date'] == small_row['date']]
+            #filtered_df = np.where(larger_df['date'] == small_row['date'])
+            for _,large_row in filtered_df.iterrows():
+                #fix time to handle edge cases
+                if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
+                    small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
+                    match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
+                    # print("found time bound with this row")
+                    # print("******************************************************")
+                    # print("small", small_row) 
+                    # print("large", large_row)
+                    if match:
+                        print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
+                        print("there is a match")
+                        output = pd.concat([small_row, large_row], axis=0)
+                        spamwriter.writerow(output)
 
 
 
