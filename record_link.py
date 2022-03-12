@@ -29,13 +29,14 @@ def get_header(cursor):
     return header
 
 def go():
-
+    """
+    Runs entire py file
+    """
     #created connection
     connection = sqlite3.connect("proj_ez.sqlite3")
     citi = connection.cursor()
     chi = connection.cursor()
 
-    #REMOVE LIMIT 10
     citizen_query = '''
         SELECT 
             title as description,
@@ -44,7 +45,6 @@ def go():
             categories as primary_type
         FROM citizen
         '''
-
     chi_query = '''
         SELECT 
             date,
@@ -54,7 +54,6 @@ def go():
             description
         FROM Chi_Data_Portal
         '''
-
     citizen_query = (citi.execute(citizen_query).fetchall())
     chi_query = (chi.execute(chi_query).fetchall())
 
@@ -67,17 +66,27 @@ def go():
     standard_date_time(citizen_df, 'citizen')
     standard_date_time(chi_df, 'chi')
 
-    print("length before drops", len(chi_df), len(citizen_df))
+    print("length before drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
     chi_df = chi_df.drop_duplicates(keep = 'first')
     citizen_df = citizen_df.drop_duplicates(keep = 'first')
-    print("length after drops", len(chi_df), len(citizen_df))
+    print("length after drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
 
-    
+    link_records(citizen_df, chi_df)
+    print_date_timeframes(citizen_df, chi_df)
     return citizen_df, chi_df
 
-#get citizen lat/long column to two columns to match with chigao database
-#converts from list of str to list of tuples nd splits 
-#turns out location is lat/long in one so can use that if prefet
+def print_date_timeframes(citizen_df, chi_df):
+    """
+    Call to print out the duration of each dataframe
+    """
+    earliest_match_date = max(chi_df['date'].min(), citizen_df['date'].min())
+    latest_match_date = min(chi_df['date'].max(), citizen_df['date'].max())
+    print("Chicago Data Portal:", "Start", chi_df['date'].min(),  "End", chi_df['date'].max())
+    print("Citizen:", "Start", citizen_df['date'].min(), "End", citizen_df['date'].max())
+    print("Overlap", earliest_match_date, "to", latest_match_date)
+    print("Num days of overlap", latest_match_date - earliest_match_date)
+
+
 def clean_lat_long(df, source):
     """
     if df citizen take lat/long string column to tuple
@@ -97,8 +106,6 @@ def clean_lat_long(df, source):
     elif source == 'chi':
         df.astype({'latitude': 'float64', 'longitude': 'float64'})
         df['lat_long'] = list(zip(df.latitude, df.longitude))
-    # return df
-
 
 
 def read_csv_file(filename):
@@ -114,9 +121,8 @@ def read_csv_file(filename):
                                 cols_to_keep)
     return df
 
-# geopandas will need BLOCK + ZIPCODE to calculate lat / lon
-# Chicago API and Citizen data already provided lat / lon
-
+# currently not using this... chicago and citizen have lat / long
+# keep for mock data
 def get_lat_long():
     """
     converts block and zipcode into a lat / lon coordinate
@@ -136,7 +142,6 @@ def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 4):
     accurate match
     """
     dist = distance.great_circle(loc_1, loc_2).miles
-    print("distance", dist)
     if dist >= lower_bound and dist <= upper_bound:
         return True
     return False
@@ -155,7 +160,6 @@ def standard_date_time(df, source):
         replaces with a datetime object
     """
     dt_objs = []
-    cal_objs = []
     time_objs = []
     for index, row in df.iterrows():
         timestamp = row['date']
@@ -172,14 +176,14 @@ def standard_date_time(df, source):
     df['time'] = time_objs
     return df
 
-def link_records(chi, citizen, time_lower_bound=5, time_upper_bound=5, \
+def link_records(citizen, chi, time_lower_bound=5, time_upper_bound=5, \
         dist_lower_bound = 0, dist_upper_bound = 5):
     """
     """
     if len(chi) < len(citizen):
         smaller_df = chi
         suffix = '_chi'
-        suffic2 ='_citizen'
+        suffix2 ='_citizen'
         larger_df = citizen
     else:
         smaller_df = citizen
@@ -197,27 +201,18 @@ def link_records(chi, citizen, time_lower_bound=5, time_upper_bound=5, \
             #filtered_df = np.where(larger_df['date'] == small_row['date'])
             for _,large_row in filtered_df.iterrows():
                 #fix time to handle edge cases
-                # if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
-                #     small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
-                    # print(type(large_row['lat_long']))
-                match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
+                if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
+                    small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
+                    match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
                     # print("found time bound with this row")
                     # print("******************************************************")
                     # print("small", small_row) 
                     # print("large", large_row)
-                if match:
-                    print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
-                    print("there is a match")
-                    output = pd.concat([small_row, large_row], axis=0)
-                    spamwriter.writerow(output)
-
-                
-                
-
-
-
-# standard_date_time(citizen_df, date_col = 'created_at')
-
+                    if match:
+                        print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
+                        print("there is a match")
+                        output = pd.concat([small_row, large_row], axis=0)
+                        spamwriter.writerow(output)
 
 
 
