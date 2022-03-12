@@ -66,6 +66,12 @@ def go():
 
     standard_date_time(citizen_df, 'citizen')
     standard_date_time(chi_df, 'chi')
+
+    print("length before drops", len(chi_df), len(citizen_df))
+    chi_df = chi_df.drop_duplicates(keep = 'first')
+    citizen_df = citizen_df.drop_duplicates(keep = 'first')
+    print("length after drops", len(chi_df), len(citizen_df))
+
     
     return citizen_df, chi_df
 
@@ -89,7 +95,10 @@ def clean_lat_long(df, source):
             tup_lst.append(ast.literal_eval(s))
         df['lat_long'] = tup_lst
     elif source == 'chi':
+        df.astype({'latitude': 'float64', 'longitude': 'float64'})
         df['lat_long'] = list(zip(df.latitude, df.longitude))
+    # return df
+
 
 
 def read_csv_file(filename):
@@ -127,6 +136,7 @@ def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 2):
     accurate match
     """
     dist = distance.great_circle(loc_1, loc_2).miles
+    print("distance", dist)
     if dist >= lower_bound and dist <= upper_bound:
         return True
     return False
@@ -163,32 +173,41 @@ def standard_date_time(df, source):
     return df
 
 def link_records(chi, citizen, time_lower_bound=2, time_upper_bound=2, \
-        dist_lower_bound = 0, dist_upper_bound = 2):
+        dist_lower_bound = 0, dist_upper_bound = 5):
     """
     """
-
     if len(chi) < len(citizen):
         smaller_df = chi
+        suffix = '_chi'
         larger_df = citizen
     else:
         smaller_df = citizen
+        suffix = '_citizen'
         larger_df = chi
 
+    header = list(smaller_df.add_suffix(suffix).columns) + list(larger_df.columns)
 
     with open('match_file.csv', "w") as file:
         spamwriter = csv.writer(file, delimiter = ",")
+        spamwriter.writerow(header)
         for _,small_row in smaller_df.iterrows():
-            filtered_df = larger_df.loc[larger_df['date'] == smaller_df['date']]
+            filtered_df = larger_df.loc[larger_df['date'] == small_row['date']]
             #filtered_df = np.where(larger_df['date'] == small_row['date'])
-            print(type(filtered_df))
-            print(filtered_df)
             for _,large_row in filtered_df.iterrows():
                 #fix time to handle edge cases
-                if small_row['time'] >= large_row['time'].hour - time_lower_bound and \
-                    small_row['time'] <= large_row['time'].hour + time_upper_bound:
+                if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
+                    small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
+                    # print(type(large_row['lat_long']))
                     match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
+                    # print("found time bound with this row")
+                    # print("******************************************************")
+                    # print("small", small_row) 
+                    # print("large", large_row)
                     if match:
-                        spamwriter.writerow(small_row, large_row)
+                        print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
+                        print("there is a match")
+                        output = pd.concat([small_row, large_row], axis=0)
+                        spamwriter.writerow(output)
 
                 
                 
