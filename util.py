@@ -24,13 +24,15 @@ def df_to_csv(df, file_path):
     with open(file_path,'a') as file:
         df.to_csv(file,index=True, header=header_bool, line_terminator='\n')
     
-    # appends to existing citizen csv
-    table_name = "citizen"
-    file_path = f"olpinney/data/{table_name}.csv"
-    header_bool = (not os.path.exists(file_path))
-    with open(file_path,'a') as file:
-        df.to_csv(file, mode = 'a', index=True, header=header_bool, line_terminator='\n')
+# def df_to_csv_citizen(df, file_path,table_name="citizen"):
+#     #write to citizen
+#     df_to_csv(df,file_path)
 
+#     # appends to existing citizen csv
+#     file_path = f"olpinney/data/{table_name}.csv"
+#     header_bool = (not os.path.exists(file_path))
+#     with open(file_path,'a') as file:
+#         df.to_csv(file, mode = 'a', index=True, header=header_bool, line_terminator='\n')
 
 
 def insert_sql(df,table_name,sql_path=SQL_PATH):
@@ -110,7 +112,7 @@ def last_updated(table_name, date_col):
             old_dates_cleaned=[int(date[0]) for date in old_dates]
             max_old_date=max(old_dates_cleaned)
         else:
-            max_old_date=max(old_dates)[0][:19]
+            max_old_date=max(old_dates)[0][:19] #where did the 19 come from?
         
     except sqlite3.OperationalError:
         max_old_date=0

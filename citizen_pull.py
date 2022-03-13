@@ -10,6 +10,9 @@ import pandas as pd
 import requests
 import util
 import datetime
+import re
+import json
+
 
 PULL_SCALING=2
 TABLE_NAME='citizen'
@@ -21,19 +24,23 @@ TABLE_NAME='citizen'
 import citizen_pull as c
 
 # to refresh run this:
-c.citizen_refresh() #limit = int is ozptional 
+c.citizen_refresh() 
+#Notes: limit = int is optional. Estimate ~500 per day you want to update. 1000 is the max
 
 #to delete sql object and create a new one:
-c.reset_citizen(limit) #pick a big limit 
+c.reset_citizen(limit) #pick a 1000 limit 
+c.citizen_backfill('citizen') #to backfill with old data 
 
-#tbd
-citizen_backfill()
-probably will be helpful to use: clean_citizen(df)
+#To see the results
+x=c.citizen_get_sql("citizen")
+
+#to pull from citizen 
+y=c.get_incidents_chicago(limit) #select limit= how many rows you want
+y=c.clean_citizen(y)
 
 
 #get citizen to work with the search terms
 #save into one SQL
-#figure out what is wrong with old sql 
 
 '''
 
@@ -59,7 +66,7 @@ def citizen_refresh(limit=20,search=None,table_name=TABLE_NAME):
     citizen_dedupe_SQL(new_df_cleaned,table_name)
 
 
-def reset_citizen(limit,search=None,table_name=TABLE_NAME):
+def reset_citizen(limit=1000,search=None,table_name=TABLE_NAME):
     '''
     Deletes SQL table for citizen and sets it using latest data
 
@@ -69,7 +76,7 @@ def reset_citizen(limit,search=None,table_name=TABLE_NAME):
         limit (int): how many incidents to pull for first itteration
     
     '''
-     #customize per search term 
+     #customize per search term
     if search is not None:
         table_name+=f"_{search}"
 
@@ -80,17 +87,31 @@ def reset_citizen(limit,search=None,table_name=TABLE_NAME):
     new_df_cleaned=clean_citizen(new_df)
     util.insert_sql(new_df_cleaned,table_name)
 
-def citizen_backfill(table_name,file_path):
+def citizen_backfill(table_name,file_path="olpinney/data"):
     '''
     Back fills SQL table using csvs
     '''
+    sql_df=citizen_get_sql(table_name)
 
-    # for all csvs in project ez/ olpinney / data
-    #import 
-    with open(file_path,'r') as file:
-        df=pd.read_csv(file,mangle_dupe_cols=False)
+    file_names=os.listdir(file_path)
 
-    return df
+    for file in file_names:
+        if re.match(f"^{table_name}_\d.*-.*\d\.csv$",file):
+            with open(f"{file_path}/{file}",'r') as file:
+                df=pd.read_csv(file,mangle_dupe_cols=True)
+                
+
+            df["_geoloc"]=df["_geoloc"].apply(lambda x: [json.loads(x[1:-1].replace("'", "\""))])
+            df_clean=clean_citizen(df)
+            sql_df=pd.concat([sql_df,df_clean])
+                
+    sql_df.drop_duplicates(keep='first')
+    print(sql_df)
+
+    #save to sql
+    util.drop_table(table_name)
+    util.insert_sql(sql_df,table_name)            
+
 
 def citizen_dedupe_SQL(new_df,table_name):
     ''' 
@@ -101,30 +122,44 @@ def citizen_dedupe_SQL(new_df,table_name):
         table_name (str): name of table in sql
 
     '''
+    #combine the data 
+    old_df=citizen_get_sql(table_name)
 
-    connection=util.get_connection()
-    
-    #pull in old data
-    query= f"select * from {table_name}" #specifically for the citizen table 
-    old_df=pd.read_sql(query, con = connection)
+    df=pd.concat([old_df,new_df])
 
-    #add to new data
-
-    print("about old df")
-    print(type(old_df))
     print(old_df.columns)
-
-    print("about new df")
-    print(type(new_df))
+    print(old_df.dtypes)
     print(new_df.columns)
+    print(new_df.dtypes)
 
-    df=pd.concat(old_df,new_df)
 
     df.drop_duplicates(keep='first')
 
     #save to sql
     util.drop_table(table_name)
     util.insert_sql(new_df,table_name)
+
+def citizen_get_sql(table_name):
+    ''' 
+    get citizen data from SQL
+
+    Inputs:
+        table_name (str): name of table in sql
+
+    Output:
+        df (df): deduped df
+    '''
+
+    connection=util.get_connection()
+    
+    #pull in old data
+    query= f"select * from {table_name}" #specifically for the citizen table 
+    df=pd.read_sql(query, con = connection)
+
+    df=df.drop(columns='index')
+
+    return df 
+
 
 def save_citizen_csv(new_df,table_name):
     '''
@@ -149,8 +184,10 @@ def clean_citizen(df):
     '''
     df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat']) 
     df['long']=df["_geoloc"].apply(lambda x: x[0]['lng']) 
-    to_drop=['_geoloc','city_code','ranking.level','ranking.has_video','ranking.views','ranking.notifications','_highlightResult']
-    df.drop(columns=to_drop)
+
+
+    to_drop=['_geoloc','updates','city_code','ranking.level','ranking.has_video','ranking.views','ranking.notifications','_highlightResult']
+    df=df.drop(columns=to_drop)
     return df
 
 def pull_recent(limit,search,table_name):
@@ -179,20 +216,15 @@ def pull_recent(limit,search,table_name):
     #pull in new data
     new_df=get_incidents_chicago(limit,search)
 
-    i=0
-    while max_old_date < min(new_df['created_at']):
-
+    while max_old_date < min(new_df['created_at']) and limit*PULL_SCALING<=1000: #API restricts pulls at 1000
 
         print(f"max old date is {convert_dt(max_old_date)} while min date is {convert_dt(min(new_df['created_at']))}")
         print(f"limit is {limit}")
-        i+=1
-        if i==2:
-            break 
 
         limit=limit*PULL_SCALING
         old_df=new_df
         new_df=get_incidents_chicago(limit,search)
-        if new_df is None:
+        if new_df is None: #e.g. the pull failed, then use last successful pull 
             new_df=old_df
             break
 
