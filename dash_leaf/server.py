@@ -14,7 +14,7 @@ geojson = dl.GeoJSON(data=data, options=dict(pointToLayer=point_to_layer))
 # Create the app.  
 app = dash.Dash()  
 app.layout = html.Div([  
-    dl.Map([dl.TileLayer(), geojson], center=(41,-87), zoom=8, style={'height': '100vh'}),  
+    dl.Map([dl.TileLayer(), geojson], center=(41.8691,-87.6298), zoom=12, style={'height': '100vh'}),  
 ])  
 
 if __name__ == '__main__':  
