@@ -36,6 +36,7 @@ def go():
     connection = sqlite3.connect("proj_ez.sqlite3")
     citi = connection.cursor()
     chi = connection.cursor()
+    mock = connection.cursor()
 
     citizen_query = '''
         SELECT 
@@ -54,11 +55,29 @@ def go():
             description
         FROM Chi_Data_Portal
         '''
+    mock_query = '''
+        SELECT
+            cast(house_num as int) as house_num,
+            street_name,
+            street_type,
+            street_intersection,
+            date,
+            time,
+            primary_type
+        FROM mock
+        '''
     citizen_query = (citi.execute(citizen_query).fetchall())
     chi_query = (chi.execute(chi_query).fetchall())
+    mock_query = (mock.execute(mock_query).fetchall())
 
     citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
     chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
+    mock_df = pd.DataFrame(mock_query, columns=get_header(mock))
+
+    #update mock_df house num to int to str
+    mock_df['house_num'] = mock_df.house_num.fillna(0)
+    mock_df['house_num'] = mock_df.house_num.astype(int)
+    mock_df['house_num'] = mock_df.house_num.astype(str)
 
     clean_lat_long(citizen_df, 'citizen')
     clean_lat_long(chi_df, 'chi')
@@ -73,7 +92,7 @@ def go():
 
     link_records(citizen_df, chi_df)
     print_date_timeframes(citizen_df, chi_df)
-    return citizen_df, chi_df
+    return citizen_df, chi_df, mock_df
 
 def print_date_timeframes(citizen_df, chi_df):
     """
@@ -123,7 +142,7 @@ def read_csv_file(filename):
 
 # currently not using this... chicago and citizen have lat / long
 # keep for mock data
-def get_lat_long():
+def get_lat_long(mock_df):
     """
     converts block and zipcode into a lat / lon coordinate
 
@@ -131,9 +150,35 @@ def get_lat_long():
         
     """
     # user agent is how requests to geopy are tracked (DON'T CALL ON FULL pandas)
-    locator = nom(user_agent= 'ecjackson1821@gmail.com')
-    location = locator.geocode("3400 W CHICAGO AVE 60651")
-    return location
+    # mock_df['house_num'] = mock_df['house_num'].astype(float).round().astype(int)
+    # mock_df.astype({'house_num': 'float64'})
+    # mock_df['house_num'].fillna(0).astype(int(float))
+    # mock_df.astype({'house_num': str})
+    lat_longs = []
+    for _, row in mock_df.iterrows():
+        # print("address", [row['house_num'], row['street_name'], row['street_type'], "Chicago"])
+        if row['house_num'] and row['street_type']:
+            address = " ".join([row['house_num'], row['street_name'], row['street_type'], "Chicago"])
+        elif row['house_num']:
+            address = " ".join([row['house_num'], row['street_name'], "Chicago"])
+        elif row['street_intersection']:
+            address = " ".join([row['street_name'], row['street_type'], "and", row['street_intersection'], "Chicago"])
+        else:
+            print("insufficent location data")
+            continue
+        locator = nom(user_agent= 'ecjackson1821@gmail.com')
+        location = locator.geocode(address)
+        if location:
+            lat = location.latitude
+            long = location.longitude
+        else:
+            lat = None
+            long = None
+            print("couldn't find coordinates", address)
+        lat_long = lat, long
+        lat_longs.append(lat_long)
+    mock_df['lat_long'] = lat_longs
+
 
 def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 4):
     """

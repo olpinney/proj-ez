@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import requests
 import util
+import datetime
 
 PULL_SCALING=2
 TABLE_NAME='citizen'
@@ -18,6 +19,22 @@ TABLE_NAME='citizen'
 %autoreload 2
 
 import citizen_pull as c
+
+# to refresh run this:
+c.citizen_refresh() #limit = int is ozptional 
+
+#to delete sql object and create a new one:
+c.reset_citizen(limit) #pick a big limit 
+
+#tbd
+citizen_backfill()
+probably will be helpful to use: clean_citizen(df)
+
+
+#get citizen to work with the search terms
+#save into one SQL
+#figure out what is wrong with old sql 
+
 '''
 
 def citizen_refresh(limit=20,search=None,table_name=TABLE_NAME):
@@ -67,6 +84,9 @@ def citizen_backfill(table_name,file_path):
     '''
     Back fills SQL table using csvs
     '''
+
+    # for all csvs in project ez/ olpinney / data
+    #import 
     with open(file_path,'r') as file:
         df=pd.read_csv(file,mangle_dupe_cols=False)
 
@@ -89,7 +109,17 @@ def citizen_dedupe_SQL(new_df,table_name):
     old_df=pd.read_sql(query, con = connection)
 
     #add to new data
+
+    print("about old df")
+    print(type(old_df))
+    print(old_df.columns)
+
+    print("about new df")
+    print(type(new_df))
+    print(new_df.columns)
+
     df=pd.concat(old_df,new_df)
+
     df.drop_duplicates(keep='first')
 
     #save to sql
@@ -109,16 +139,16 @@ def save_citizen_csv(new_df,table_name):
     max_new_date=max(new_df['created_at'])
     min_new_date=min(new_df['created_at'])
 
-    #save data
+    #save data 
+    # updated util to create two files, new one from date and appends to existing citizen csv
     util.df_to_csv(new_df,f"olpinney/data/{table_name}_{min_new_date}-{max_new_date}.csv")
-
 
 def clean_citizen(df):
     '''
     removes extra columns from citizen data, and fixes lat and long 
     '''
     df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat']) 
-    df['long']=df["_geoloc"].apply(lambda x: x[0]['lng'])) 
+    df['long']=df["_geoloc"].apply(lambda x: x[0]['lng']) 
     to_drop=['_geoloc','city_code','ranking.level','ranking.has_video','ranking.views','ranking.notifications','_highlightResult']
     df.drop(columns=to_drop)
     return df
@@ -127,7 +157,7 @@ def pull_recent(limit,search,table_name):
     '''
     pull data from citizen until SQL filled back to last saved incident
     
-    Inputs
+    Inputs:
         search (str): optional filter term, default off
         table_name (str): name of table in sql
         limit (int): how many incidents to pull for first itteration
@@ -149,14 +179,26 @@ def pull_recent(limit,search,table_name):
     #pull in new data
     new_df=get_incidents_chicago(limit,search)
 
+    i=0
     while max_old_date < min(new_df['created_at']):
-        limit=limit*PULL_SCALING
 
+
+        print(f"max old date is {convert_dt(max_old_date)} while min date is {convert_dt(min(new_df['created_at']))}")
+        print(f"limit is {limit}")
+        i+=1
+        if i==2:
+            break 
+
+        limit=limit*PULL_SCALING
+        old_df=new_df
         new_df=get_incidents_chicago(limit,search)
+        if new_df is None:
+            new_df=old_df
+            break
 
     return new_df
 
- 
+
 def get_incidents_chicago(limit,search=None):
     '''
     pulls incidents from citizen.com/explore specifically for chicago region
@@ -170,6 +212,15 @@ def get_incidents_chicago(limit,search=None):
     '''
     lat_long=(41.763221610079455,-87.75672119312583,41.93975658843911,-87.56055880687256)
     return get_incidents(lat_long,limit,search)
+
+def convert_dt(timestamp):
+    """
+    converts unix format for date and time to datetime object
+    """
+    timestamp = int(timestamp) / 1000
+    dt_obj = datetime.datetime.fromtimestamp(timestamp)
+    return dt_obj
+
 
 def get_incidents(lat_long,limit,search=None):
     '''
@@ -195,10 +246,16 @@ def get_incidents(lat_long,limit,search=None):
     request=requests.get(url) #add max-age cache-control for refreshes
     
     citizen_dict=request.json()
-    print(citizen_dict.keys())
+    
+    try:
+        results_df=pd.DataFrame(citizen_dict['hits'])
+        return results_df
 
-    results_df=pd.DataFrame(citizen_dict['hits'])
-    return results_df
+    except KeyError:
+        #API request was too big
+        print(f"limit of {limit} was too big")
+        return None
+
 
 
 if __name__ == "__main__":
