@@ -139,9 +139,9 @@ def save_citizen_csv(new_df,table_name):
     max_new_date=max(new_df['created_at'])
     min_new_date=min(new_df['created_at'])
 
-    #save data
+    #save data 
+    # updated util to create two files, new one from date and appends to existing citizen csv
     util.df_to_csv(new_df,f"olpinney/data/{table_name}_{min_new_date}-{max_new_date}.csv")
-
 
 def clean_citizen(df):
     '''
@@ -157,7 +157,7 @@ def pull_recent(limit,search,table_name):
     '''
     pull data from citizen until SQL filled back to last saved incident
     
-    Inputs
+    Inputs:
         search (str): optional filter term, default off
         table_name (str): name of table in sql
         limit (int): how many incidents to pull for first itteration
@@ -199,7 +199,6 @@ def pull_recent(limit,search,table_name):
     return new_df
 
 
- 
 def get_incidents_chicago(limit,search=None):
     '''
     pulls incidents from citizen.com/explore specifically for chicago region
@@ -215,6 +214,9 @@ def get_incidents_chicago(limit,search=None):
     return get_incidents(lat_long,limit,search)
 
 def convert_dt(timestamp):
+    """
+    converts unix format for date and time to datetime object
+    """
     timestamp = int(timestamp) / 1000
     dt_obj = datetime.datetime.fromtimestamp(timestamp)
     return dt_obj
