@@ -24,7 +24,7 @@ data = dlx.dicts_to_geojson(points)
 # Create geojson.  
 point_to_layer = assign("function(feature, latlng, context) {return L.marker(latlng);}")
 bind = assign("function(feature,layer) {layer.bindPopup(feature.properties.value);}")
-geojson = dl.GeoJSON(data=data, options=dict(pointToLayer=point_to_layer, onEachFeature=bind))
+geojson = dl.GeoJSON(data=data, cluster=True, zoomToBoundsOnClick=True, options=dict(pointToLayer=point_to_layer, onEachFeature=bind))
 
 # Create the app.  
 app = dash.Dash()  
