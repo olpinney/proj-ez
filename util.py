@@ -8,6 +8,8 @@ proj-ez
 import pandas as pd
 import os
 import sqlite3
+#might not need 
+import sys
 
 SQL_PATH="proj_ez.sqlite3"
 
@@ -74,10 +76,11 @@ def get_cursor(sql_path=SQL_PATH):
         (cursor): cursor to sql  
 
     '''
+    if os.path.abspath(os.curdir) == "C:\Windows\system32":
+        #this code is used for the batch file on Olivia's computer
+        os.chdir("../../Users/Olivia_Pinney/Documents/UChicago_Materials/CS_122/final-project/proj-ez")
 
-    connection = sqlite3.connect(sql_path)
-
-    return connection.cursor()
+    return get_connection(sql_path=SQL_PATH).cursor()
 
 def get_connection(sql_path=SQL_PATH):
     '''
@@ -108,31 +111,13 @@ def last_updated(table_name, date_col):
     try:
         query= f"select {date_col} from {table_name}" #specifically for the citizen table 
         old_dates=c.execute(query).fetchall()
-        if table_name == 'citizen':
+        if 'citizen' in table_name:
             old_dates_cleaned=[int(date[0]) for date in old_dates]
             max_old_date=max(old_dates_cleaned)
         else:
-            max_old_date=max(old_dates)[0][:19] #where did the 19 come from?
+            max_old_date=max(old_dates)[0][:19] 
         
     except sqlite3.OperationalError:
         max_old_date=0
     
     return max_old_date
-
-    
-# def create_table_sql(cursor,cols,name):
-#     '''
-#     Create new table in SQL document if it doesnt already exist
-
-#     Inputs:
-#         cursor (cursor): cursor object for SQL table 
-#         cols (list): columns for new table
-#         name (str): name of new table
-#     '''
-#     try: 
-#         col_count=len(cols)
-#         #note that list type is not accepted 
-#         create_query="CREATE TABLE "+name+" ("+", ".join(cols)+")"
-#         cursor.execute(create_query)
-#     except sqlite3.OperationalError:
-#         print("table already exists")
