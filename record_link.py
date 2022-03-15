@@ -15,6 +15,11 @@ chi_data = 'Violence_Reduction_-_Victims_of_Homicides_and_Non-Fatal_Shootings.cs
 incidents = 'ECCSC First Responder_ Incident Report (Responses) - Form Responses 1.csv'
 citizen = 'olpinney/data/citizen_0-1646429990000.csv'
 
+DIST_LOWER_BOUND = 0
+DIST_UPPER_BOUND = .25
+TIME_LOWER_BOUND = 1
+TIME_UPPER_BOUND = 1
+
 #taken from Lamont PA3
 def get_header(cursor):
     '''
@@ -42,7 +47,8 @@ def go():
         SELECT 
             title as description,
             created_at as date, 
-            lat_long as lat_long, 
+            lat,
+            long,
             categories as primary_type
         FROM citizen
         '''
@@ -90,7 +96,7 @@ def go():
     citizen_df = citizen_df.drop_duplicates(keep = 'first')
     print("length after drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
 
-    link_records(citizen_df, chi_df)
+    link_records(citizen_df, chi_df, DIST_LOWER_BOUND, DIST_UPPER_BOUND, TIME_LOWER_BOUND, TIME_UPPER_BOUND )
     print_date_timeframes(citizen_df, chi_df)
     return citizen_df, chi_df, mock_df
 
@@ -117,11 +123,12 @@ def clean_lat_long(df, source):
     Returns: None (updates in place)
     """
     if source == 'citizen':
-        lst = df['lat_long'].tolist()
-        tup_lst = []
-        for s in lst:
-            tup_lst.append(ast.literal_eval(s))
-        df['lat_long'] = tup_lst
+        #lst = df['lat_long'].tolist()
+        #tup_lst = []
+        #for s in lst:
+        #    tup_lst.append(ast.literal_eval(s))
+        #df['lat_long'] = tup_lst
+        df['lat_long'] = list(zip(df.lat, df.long))
     elif source == 'chi':
         df.astype({'latitude': 'float64', 'longitude': 'float64'})
         df['lat_long'] = list(zip(df.latitude, df.longitude))
@@ -180,7 +187,7 @@ def get_lat_long(mock_df):
     mock_df['lat_long'] = lat_longs
 
 
-def reported_difference_in_dist(loc_1, loc_2, lower_bound = 0, upper_bound = 4):
+def reported_difference_in_dist(loc_1, loc_2, lower_bound, upper_bound):
     """
     takes in two lat/long tuples and finds the geodesic distance between the 
     two points. Uses lower and upper bound limits to determine likelihood of
@@ -209,6 +216,7 @@ def standard_date_time(df, source):
     for index, row in df.iterrows():
         timestamp = row['date']
         if source == "citizen":
+            timestamp = float(timestamp)
             timestamp = int(timestamp) / 1000
             dt_obj = datetime.datetime.fromtimestamp(timestamp)
         elif source == "chi":
@@ -221,8 +229,7 @@ def standard_date_time(df, source):
     df['time'] = time_objs
     return df
 
-def link_records(citizen, chi, time_lower_bound=5, time_upper_bound=5, \
-        dist_lower_bound = 0, dist_upper_bound = 5):
+def link_records(citizen, chi, dist_lower_bound, dist_upper_bound, time_lower_bound, time_upper_bound):
     """
     """
     if len(chi) < len(citizen):
