@@ -24,6 +24,11 @@ TIME_UPPER_BOUND = 1
 def get_header(cursor):
     '''
     Given a cursor object, returns the appropriate header (column names)
+
+    Inputs:
+        Cursor (object): connected to SQLITE database
+
+    Returns column headers for creating pandas dataframe
     '''
     header = []
     for i in cursor.description:
@@ -47,8 +52,8 @@ def go():
         SELECT 
             title as description,
             created_at as date, 
-            lat,
-            long,
+            lat as latitude,
+            long as longitude,
             categories as primary_type
         FROM citizen
         '''
@@ -116,56 +121,34 @@ def print_date_timeframes(citizen_df, chi_df):
 
 def clean_lat_long(df, source):
     """
-    if df citizen take lat/long string column to tuple
-    if df chi lat/long columns zipped to tulpe
+    Updates each dataframe in place to insert a lat_long
+    column, a tuple of lat (float), long (float). 
 
     Inputs:
         df (pandas df): dataframe to update lat/long for
         source (str): citizen or chi
-    Returns: None (updates in place)
+
+    Returns none (updates in place)
     """
-    if source == 'citizen':
-        #lst = df['lat_long'].tolist()
-        #tup_lst = []
-        #for s in lst:
-        #    tup_lst.append(ast.literal_eval(s))
-        #df['lat_long'] = tup_lst
-        df['lat_long'] = list(zip(df.lat, df.long))
-    elif source == 'chi':
+    if source == 'chi':
         df.astype({'latitude': 'float64', 'longitude': 'float64'})
-        df['lat_long'] = list(zip(df.latitude, df.longitude))
+    df['lat_long'] = list(zip(df.latitude, df.longitude))
 
 
-def read_csv_file(filename):
-    """
-    using to run tests in advance of receipt of Chicago API data
-
-    Inputs:
-        filename (string): name of csv file
-    """
-    cols_to_keep = ['CASE_NUMBER', 'BLOCK', 'DATE', 'INCIDENT_PRIMARY', 'ZIP_CODE', 
-                    'WARD','COMMUNITY_AREA', 'STREET_OUTREACH_ORGANIZATION']
-    df = pd.read_csv(filename, index_col = 'CASE_NUMBER', usecols = \
-                                cols_to_keep)
-    return df
-
-# currently not using this... chicago and citizen have lat / long
-# keep for mock data
 def get_lat_long(mock_df):
     """
-    converts block and zipcode into a lat / lon coordinate
+    Converts inputted location data from mock data into latitude
+    and longitude tuples. Updates dataframe in place. 
 
     Inputs:
-        
+        mock_df (dataframe): inputted data capturing ECCSC first
+                            response activity
+    
+    Returns None (updates dataframe in place)
     """
     # user agent is how requests to geopy are tracked (DON'T CALL ON FULL pandas)
-    # mock_df['house_num'] = mock_df['house_num'].astype(float).round().astype(int)
-    # mock_df.astype({'house_num': 'float64'})
-    # mock_df['house_num'].fillna(0).astype(int(float))
-    # mock_df.astype({'house_num': str})
     lat_longs = []
     for _, row in mock_df.iterrows():
-        # print("address", [row['house_num'], row['street_name'], row['street_type'], "Chicago"])
         if row['house_num'] and row['street_type']:
             address = " ".join([row['house_num'], row['street_name'], row['street_type'], "Chicago"])
         elif row['house_num']:
