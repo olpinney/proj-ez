@@ -91,6 +91,8 @@ def go():
     standard_date_time(citizen_df, 'citizen')
     standard_date_time(chi_df, 'chi')
 
+    get_lat_long(mock_df)
+
     print("length before drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
     chi_df = chi_df.drop_duplicates(keep = 'first')
     citizen_df = citizen_df.drop_duplicates(keep = 'first')
