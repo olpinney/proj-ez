@@ -159,7 +159,7 @@ def get_lat_long(mock_df):
         else:
             print("insufficent location data")
             continue
-        locator = nom(user_agent= 'ecjackson1821@gmail.com')
+        locator = nom(user_agent= 'laurenq@uchicago.edu')
         location = locator.geocode(address)
         if location:
             lat = location.latitude
