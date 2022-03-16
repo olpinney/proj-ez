@@ -250,6 +250,8 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound, time_lower_bo
                         print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
                         print("there is a match")
                         output = pd.concat([small_row, large_row], axis=0)
+                        print(output)
+                        print(output[4])
                         spamwriter.writerow(output)
 
 
