@@ -33,4 +33,4 @@ app.layout = html.Div([
     dl.Map(id = "map1",children = [dl.TileLayer(id="title1"),geojson], center=(41.8691,-87.6298), zoom=12, style={'height': '100vh'}),
 ])
 if __name__ == '__main__':
-    app.run_server(port = 1234)
+    app.run_server()
