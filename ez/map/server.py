@@ -11,8 +11,7 @@ from dash import html
 import dash_leaflet as dl
 import dash_leaflet.express as dlx
 from dash_extensions.javascript import assign
-from record_link import get_lat_long, get_header, go
-from ez.refresh_data import sql_query
+from refresh_data import sql_query
 
 
 mock_df = sql_query.create_survery_df()
@@ -33,7 +32,7 @@ geojson = dl.GeoJSON(data=data, cluster=True, zoomToBoundsOnClick=True,
 # Create the app.
 app = dash.Dash()
 app.layout = html.Div([
-    dl.Map(id = "map1",children = [dl.TileLayer(id="title1"),geojson], center=(41.8691,-87.6298), zoom=12, style={'height': '100vh'}),
+    dl.Map([dl.TileLayer(),geojson], center=(41.8691,-87.6298), zoom=12, style={'height': '100vh'}),
 ])
 if __name__ == '__main__':
     app.run_server()
