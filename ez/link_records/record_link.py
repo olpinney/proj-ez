@@ -5,11 +5,8 @@ file called match_file.cvs
 '''
 
 import csv
-# import ast
-# import sqlite3
 import datetime
 import pandas as pd
-# from geopy.geocoders import Nominatim as nom
 from geopy import distance
 from refresh_data import sql_query
 

@@ -1,3 +1,7 @@
+'''
+This file connections to sql database and creates pandas
+dataframes associated with each table.
+'''
 import pandas as pd
 import sqlite3
 from geopy.geocoders import Nominatim as nom
