@@ -31,10 +31,8 @@ def go():
     standard_date_time(citizen_df, 'citizen')
     standard_date_time(chi_df, 'chi')
 
-    print("length before drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
     chi_df = chi_df.drop_duplicates(keep = 'first')
     citizen_df = citizen_df.drop_duplicates(keep = 'first')
-    print("length after drops", "chi data length:", len(chi_df), "citizen data length", len(citizen_df))
 
     link_records(citizen_df, chi_df, DIST_LOWER_BOUND, DIST_UPPER_BOUND, TIME_LOWER_BOUND, TIME_UPPER_BOUND )
     print_date_timeframes(citizen_df, chi_df)
@@ -162,8 +160,6 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound, time_lower_bo
                     small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
                     match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
                     if match:
-                        print("*!%#($#))!%(%#*!)%!#))%#!*(*^!)!_")
-                        print("there is a match")
                         output = pd.concat([small_row, large_row], axis=0)
                         output[4] = str(output[4]).replace(", ", "")
                         spamwriter.writerow(output)

@@ -346,11 +346,5 @@ def get_incidents(lat_long,limit,search=None):
 
 
 if __name__ == "__main__":
-    #with open('test_csv_file.csv', 'w') as f:
-        # # create the csv writer
-        # writer = csv.writer(f)
-        # # write a row to the csv file
-        # writer.writerow("z")
-
     citizen_refresh()
     
