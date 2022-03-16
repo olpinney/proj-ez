@@ -6,7 +6,6 @@ import datetime
 import time
 import csv
 import util
-import util 
 
 
 SQL_PATH="proj_ez.sqlite3"

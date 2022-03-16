@@ -7,15 +7,24 @@ do
     case $opt in
         "Run record link analysis")
             echo "You chose to run record link analysis"
-            python3 __main__,py "run"
+            python3 __main__.py "run"
+            echo "You are still in options menu, reminder:"
+            echo "1 to run record link analysis"
+            echo "2 to open map of ECCSC responses"
+            echo "3 to quit program"
             ;;
         "Open Map of ECCSC Responses")
             echo "You chose to open map of ECCSC responses"
             python3 __main__.py "map"
+            echo "You are still in options menu, reminder:"
+            echo "1 to run record link analysis"
+            echo "2 to open map of ECCSC responses"
+            echo "3 to quit program"
             ;;
         "Go home and grab a drink")
             echo "You chose to go home and grab a drink"
             echo "Well earned, enjoy!"
+            echo "Closing program"
             break
             ;;
         *) echo "invalid option $REPLY";;

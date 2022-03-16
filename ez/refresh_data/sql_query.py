@@ -55,7 +55,6 @@ def get_lat_long(mock_df):
         else:
             lat = None
             long = None
-            print("couldn't find coordinates", address)
         lat_long = lat, long
         lat_longs.append(lat_long)
     mock_df['lat_long'] = lat_longs

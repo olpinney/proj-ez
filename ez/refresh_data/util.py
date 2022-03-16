@@ -8,7 +8,6 @@ proj-ez
 import pandas as pd
 import os
 import sqlite3
-#might not need 
 import sys
 
 SQL_PATH="proj_ez.sqlite3"
@@ -25,17 +24,6 @@ def df_to_csv(df, file_path):
 
     with open(file_path,'a') as file:
         df.to_csv(file,index=True, header=header_bool, line_terminator='\n')
-    
-# def df_to_csv_citizen(df, file_path,table_name="citizen"):
-#     #write to citizen
-#     df_to_csv(df,file_path)
-
-#     # appends to existing citizen csv
-#     file_path = f"olpinney/data/{table_name}.csv"
-#     header_bool = (not os.path.exists(file_path))
-#     with open(file_path,'a') as file:
-#         df.to_csv(file, mode = 'a', index=True, header=header_bool, line_terminator='\n')
-
 
 def insert_sql(df,table_name,sql_path=SQL_PATH):
     '''
