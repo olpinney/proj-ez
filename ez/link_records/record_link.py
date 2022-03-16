@@ -7,10 +7,12 @@ import sqlite3
 import ast
 import numpy as np
 import csv
+from data import sql_query
 
-chi_data = 'Violence_Reduction_-_Victims_of_Homicides_and_Non-Fatal_Shootings.csv'
-incidents = 'ECCSC First Responder_ Incident Report (Responses) - Form Responses 1.csv'
-citizen = 'olpinney/data/citizen_0-1646429990000.csv'
+
+# chi_data = 'Violence_Reduction_-_Victims_of_Homicides_and_Non-Fatal_Shootings.csv'
+# incidents = 'ECCSC First Responder_ Incident Report (Responses) - Form Responses 1.csv'
+# citizen = 'olpinney/data/citizen_0-1646429990000.csv'
 
 DIST_LOWER_BOUND = 0
 DIST_UPPER_BOUND = .25
@@ -40,49 +42,51 @@ def go():
     Runs entire py file
     """
     #created connection
-    connection = sqlite3.connect("proj_ez.sqlite3")
-    citi = connection.cursor()
-    chi = connection.cursor()
-    mock = connection.cursor()
+    #connection = sqlite3.connect("ez\\data\\proj_ez.sqlite3")
+    #citi = connection.cursor()
+    #chi = connection.cursor()
+    #mock = connection.cursor()
 
-    citizen_query = '''
-        SELECT 
-            title as description,
-            created_at as date, 
-            lat as latitude,
-            long as longitude,
-            categories as primary_type
-        FROM citizen
-        '''
-    chi_query = '''
-        SELECT 
-            date,
-            latitude, 
-            longitude, 
-            primary_type,	
-            description
-        FROM Chi_Data_Portal
-        '''
-    mock_query = '''
-        SELECT
-            cast(house_num as int) as house_num,
-            street_name,
-            street_type,
-            street_intersection,
-            date,
-            time,
-            primary_type
-        FROM mock
-        '''
-    citizen_query = (citi.execute(citizen_query).fetchall())
-    chi_query = (chi.execute(chi_query).fetchall())
-    mock_query = (mock.execute(mock_query).fetchall())
+    #citizen_query = '''
+    #     SELECT 
+    #         title as description,
+    #         created_at as date, 
+    #         lat as latitude,
+    #         long as longitude,
+    #         categories as primary_type
+    #     FROM citizen
+    #     '''
+    # chi_query = '''
+    #     SELECT 
+    #         date,
+    #         latitude, 
+    #         longitude, 
+    #         primary_type,	
+    #         description
+    #     FROM Chi_Data_Portal
+    #     '''
+    # mock_query = '''
+    #     SELECT
+    #         cast(house_num as int) as house_num,
+    #         street_name,
+    #         street_type,
+    #         street_intersection,
+    #         date,
+    #         time,
+    #         primary_type
+    #     FROM mock
+    #     '''
+    # citizen_query = (citi.execute(citizen_query).fetchall())
+    # chi_query = (chi.execute(chi_query).fetchall())
+    # mock_query = (mock.execute(mock_query).fetchall())
 
-    citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
-    chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
-    mock_df = pd.DataFrame(mock_query, columns=get_header(mock))
+    # citizen_df = pd.DataFrame(citizen_query, columns=get_header(citi))
+    # chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
+    # mock_df = pd.DataFrame(mock_query, columns=get_header(mock))
 
     #update mock_df house num to int to str
+
+    citizen_df, chi_df, mock_df = sql_query.create_df()
     mock_df['house_num'] = mock_df.house_num.fillna(0)
     mock_df['house_num'] = mock_df.house_num.astype(int)
     mock_df['house_num'] = mock_df.house_num.astype(str)

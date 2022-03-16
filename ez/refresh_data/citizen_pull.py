@@ -12,7 +12,7 @@ import requests
 import util
 import datetime
 import json
-import ez.refresh_data.util
+from ez.refresh_data import util
 
 
 #can remove
