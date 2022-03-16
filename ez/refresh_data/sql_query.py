@@ -2,8 +2,8 @@
 This file connections to sql database and creates pandas
 dataframes associated with each table.
 '''
-import pandas as pd
 import sqlite3
+import pandas as pd
 from geopy.geocoders import Nominatim as nom
 from geopy import distance
 
@@ -31,27 +31,29 @@ def get_header(cursor):
 def get_lat_long(mock_df):
     """
     Converts inputted location data from mock data into latitude
-    and longitude tuples. Updates dataframe in place. 
+    and longitude tuples. Updates dataframe in place.
 
     Inputs:
         mock_df (dataframe): inputted data capturing ECCSC first
                             response activity
-    
+
     Returns None (updates dataframe in place)
     """
     # user agent is how requests to geopy are tracked (DON'T CALL ON FULL pandas)
     lat_longs = []
     for _, row in mock_df.iterrows():
         if row['house_num'] and row['street_type']:
-            address = " ".join([row['house_num'], row['street_name'], row['street_type'], "Chicago"])
+            address = " ".join([row['house_num'], row['street_name'],
+                                row['street_type'], "Chicago"])
         elif row['house_num']:
             address = " ".join([row['house_num'], row['street_name'], "Chicago"])
         elif row['street_intersection']:
-            address = " ".join([row['street_name'], row['street_type'], "and", row['street_intersection'], "Chicago"])
+            address = " ".join([row['street_name'], row['street_type'],
+                                "and", row['street_intersection'], "Chicago"])
         else:
             print("insufficent location data")
             continue
-        locator = nom(user_agent= 'laurenq@uchicago.edu')
+        locator = nom(user_agent= 'kurtzp@uchicago.edu')
         location = locator.geocode(address)
         if location:
             lat = location.latitude
@@ -72,7 +74,7 @@ def create_survey_df():
         None
 
     Returns (tuple of pandas dataframes) citizen and crime dataframes
-    '''    
+    '''
     connection = CONNECTION
     mock = connection.cursor()
 
@@ -99,7 +101,7 @@ def create_survey_df():
     get_lat_long(mock_df)
     return mock_df
 
-def create_report_df(): 
+def create_report_df():
     '''
     Query sql database and create pandas dataframe
 
@@ -107,7 +109,7 @@ def create_report_df():
         None
 
     Returns (tuple of pandas dataframes) citizen and crime dataframes
-    '''   
+    '''
     connection = CONNECTION
     citi = connection.cursor()
     chi = connection.cursor()
@@ -137,4 +139,3 @@ def create_report_df():
     chi_df = pd.DataFrame(chi_query, columns=get_header(chi))
 
     return (citizen_df, chi_df)
-

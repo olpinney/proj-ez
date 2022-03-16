@@ -1,7 +1,7 @@
 '''
 API requests from Citizen (https://citizen.com/explore)
 
-Author:Olivia Pinney 
+Author:Olivia Pinney
 proj-ez
 '''
 import sqlite3
@@ -21,18 +21,21 @@ TABLE_NAME='citizen'
 
 #our table names for target citizen search categories
 DATA_PATH="../data/data"
-SEARCH_CLEANED={None:None,'Assault':'Assault / Fight','Break_In':'Break In','Gun':'Gun Related','Harassment':'Harassment','Police':'Police Related','Pursuit':'Pursuit / Search','Theft':'Robbery / Theft','Weapon':'Weapon'}
+SEARCH_CLEANED={None:None,'Assault':'Assault / Fight','Break_In':'Break In',
+                'Gun':'Gun Related','Harassment':'Harassment','Police':'Police Related',
+                'Pursuit':'Pursuit / Search','Theft':'Robbery / Theft','Weapon':'Weapon'}
 
 #estimated starting searches based on incident frequency
-SEARCH_LIMIT={None:100,'Assault':50,'Break_In':20,'Gun':70,'Harassment':10,'Police':50,'Pursuit':10,'Theft':20,'Weapon':30}
+SEARCH_LIMIT={None:100,'Assault':50,'Break_In':20,'Gun':70,'Harassment':10,
+            'Police':50,'Pursuit':10,'Theft':20,'Weapon':30}
 
 
 def citizen_searches_refresh(searches=SEARCH_CLEANED.keys()):
     '''
     refreshes all designated citizen tables
-    
+
     Inputs:
-        searchs (lst): search terms to refresh, defaults to SEARCH_CLEANED    
+        searchs (lst): search terms to refresh, defaults to SEARCH_CLEANED
     '''
     for search in searches:
         if search in SEARCH_LIMIT.keys():
@@ -42,8 +45,8 @@ def citizen_searches_refresh(searches=SEARCH_CLEANED.keys()):
 
 def citizen_searches_reset_and_backfill(searches=SEARCH_CLEANED.keys(),table_name=TABLE_NAME,file_path=DATA_PATH):
     '''
-    resets and backfills all designated citizen tables 
-    
+    resets and backfills all designated citizen tables
+
     Inputs:
         searchs (lst): search terms to refresh, defaults to SEARCH_CLEANED
         table_name (str): name of table in csv and sql
@@ -53,25 +56,24 @@ def citizen_searches_reset_and_backfill(searches=SEARCH_CLEANED.keys(),table_nam
     for search in searches:
         reset_citizen(search=search)
         citizen_backfill(search,table_name,file_path)
-        print(f"finished {search}") 
+        print(f"finished {search}")
 
 def citizen_refresh(limit=100,search=None,table_name=TABLE_NAME):
     '''
-    Pulls data since latest pull and updates csv and sql 
+    Pulls data since latest pull and updates csv and sql
 
     Inputs:
         search (str): optional filter term, default None
         table_name (str): name of table in csv and sql
         limit (int): how many incidents to pull for first itteration
-   
-    ''' 
+
+    '''
     #get data
     new_df=pull_recent(limit,search,table_name)
     save_citizen_csv(new_df,search,table_name)
- 
+
     new_df_cleaned=clean_citizen(new_df)
     citizen_dedupe_SQL(new_df_cleaned,search,table_name)
-
 
 def reset_citizen(limit=1000,search=None,table_name=TABLE_NAME):
     '''
@@ -81,21 +83,21 @@ def reset_citizen(limit=1000,search=None,table_name=TABLE_NAME):
         search (str): optional filter term, default None
         table_name (str): name of table in csv and sql
         limit (int): how many incidents to pull for first itteration
-    
+
     '''
     table_name_w_search = add_cleaned_search(search,table_name)
 
     util.drop_table(table_name_w_search)
     new_df=get_incidents_chicago(limit,search)
     save_citizen_csv(new_df,search,table_name)
-    
+
     new_df_cleaned=clean_citizen(new_df)
     util.insert_sql(new_df_cleaned,table_name_w_search)
 
 def citizen_backfill(search=None,table_name=TABLE_NAME,file_path=DATA_PATH):
     '''
     Back fills SQL table using csvs
-    
+
     Inputs:
         search (str): optional filter term, default None
         table_name (str): name of table in csv and sql
@@ -112,21 +114,21 @@ def citizen_backfill(search=None,table_name=TABLE_NAME,file_path=DATA_PATH):
         if re.match(f"^{table_name_w_search}_\d.*.csv$",file):
             with open(f"{file_path}/{file}",'r') as file:
                 df=pd.read_csv(file,mangle_dupe_cols=True)
-                #should be false once pandas package supports it 
-                
-            #make _geoloc back into list containing single dictionary 
+                #should be false once pandas package supports it
+
+            #make _geoloc back into list containing single dictionary
             df["_geoloc"]=df["_geoloc"].apply(lambda x: [json.loads(x[1:-1].replace("'", "\""))])
             #make categories into string from string represetnation of a single entry list
             df["categories"]=df["categories"].apply(lambda x: x[1:-1].replace("'",""))
             df_clean=clean_citizen(df)
             sql_df=pd.concat([sql_df,df_clean])
-                
+
     overwrite_sql_w_dedup(sql_df,search,table_name)
 
 def citizen_combine_searches(table_name=TABLE_NAME,to_combine=SEARCH_CLEANED):
     combined_name="combined"
     combined_df=citizen_get_sql(combined_name,table_name)
-    
+
     for search in to_combine:
         search_df=citizen_get_sql(search,table_name)
         combined_df=pd.concat([combined_df,search_df])
@@ -135,7 +137,7 @@ def citizen_combine_searches(table_name=TABLE_NAME,to_combine=SEARCH_CLEANED):
 
 
 def citizen_dedupe_SQL(new_df,search=None,table_name=TABLE_NAME):
-    ''' 
+    '''
     remove duplicated data between new_df and SQL and replace SQL
 
     Inputs:
@@ -144,16 +146,16 @@ def citizen_dedupe_SQL(new_df,search=None,table_name=TABLE_NAME):
         table_name (str): name of table in sql
 
     '''
-    #combine the data 
+    #combine the data
     old_df=citizen_get_sql(search,table_name)
 
     df=pd.concat([old_df,new_df])
     overwrite_sql_w_dedup(df,search,table_name)
-    
+
 def overwrite_sql_w_dedup(df,search=None,table_name=TABLE_NAME):
     '''
-    Overwrite sql file with deduplicated data 
-    
+    Overwrite sql file with deduplicated data
+
     Inputs:
         df (df): updated data
         search (str): optional filter term, default None
@@ -168,7 +170,7 @@ def overwrite_sql_w_dedup(df,search=None,table_name=TABLE_NAME):
     util.insert_sql(dedupded_df,table_name_w_search)
 
 def citizen_get_sql(search=None,table_name=TABLE_NAME):
-    ''' 
+    '''
     get citizen data from SQL
 
     Inputs:
@@ -179,14 +181,14 @@ def citizen_get_sql(search=None,table_name=TABLE_NAME):
     '''
     table_name_w_search = add_cleaned_search(search,table_name)
     connection=util.get_connection()
-    
+
     #pull in old data
-    query= f"select * from {table_name_w_search}" #specifically for the citizen table 
+    query= f"select * from {table_name_w_search}" #specifically for the citizen table
     df=pd.read_sql(query, con = connection)
 
     df=df.drop(columns='index')
 
-    return df 
+    return df
 
 
 def save_citizen_csv(new_df,search=None,table_name=TABLE_NAME):
@@ -199,13 +201,13 @@ def save_citizen_csv(new_df,search=None,table_name=TABLE_NAME):
     '''
     table_name_w_search = add_cleaned_search(search,table_name)
 
-    #create csv label 
+    #create csv label
     max_new_date=convert_dt(max(new_df['created_at']))
     max_month=max_new_date.month
     max_year=max_new_date.year
 
 
-    #save data 
+    #save data
     util.df_to_csv(new_df,f"{DATA_PATH}/{table_name_w_search}_{max_month}-{max_year}.csv")
 
 def add_cleaned_search(search,table_name):
@@ -215,7 +217,7 @@ def add_cleaned_search(search,table_name):
     Inputs:
         search (str): optional filter term, default None
         table_name (str): name of table in csv and sql
-    
+
     Outputs:
         table_name (str): name of table with search term in csv and sql
     '''
@@ -228,14 +230,15 @@ def add_cleaned_search(search,table_name):
 
 def clean_citizen(df):
     '''
-    removes extra columns from citizen data, and fixes lat and long 
+    removes extra columns from citizen data, and fixes lat and long
     '''
-    df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat']) 
-    df['long']=df["_geoloc"].apply(lambda x: x[0]['lng']) 
+    df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat'])
+    df['long']=df["_geoloc"].apply(lambda x: x[0]['lng'])
     # df['categories']=df['categories'].apply(lambda x: ", ".join(x))
     df['categories']=df['categories'].apply(lambda x: ", ".join(x) if isinstance(x,list) else x)
 
-    to_drop=['_geoloc','updates','city_code','ranking.level','ranking.has_video','ranking.views','ranking.notifications','_highlightResult']
+    to_drop=['_geoloc','updates','city_code','ranking.level','ranking.has_video',
+            'ranking.views','ranking.notifications','_highlightResult']
     df=df.drop(columns=to_drop)
 
     return df
@@ -250,7 +253,7 @@ def pull_recent(limit,search,table_name):
         limit (int): how many incidents to pull for first itteration
 
     Returns
-        new_df (df): dataframe containing all incidences since last pull 
+        new_df (df): dataframe containing all incidences since last pull
     '''
     c=util.get_cursor()
 
@@ -258,7 +261,7 @@ def pull_recent(limit,search,table_name):
 
     #pull in old data
     try:
-        query= f"select created_at from {table_name_w_search}" #specifically for the citizen table 
+        query= f"select created_at from {table_name_w_search}" #specifically for the citizen table
         old_dates=c.execute(query).fetchall()
         old_dates_cleaned=[int(float(date[0])) for date in old_dates]
         max_old_date=max(old_dates_cleaned)
@@ -276,7 +279,7 @@ def pull_recent(limit,search,table_name):
         limit=limit*PULL_SCALING
         old_df=new_df
         new_df=get_incidents_chicago(limit,search)
-        if new_df is None: #e.g. the pull failed, then use last successful pull 
+        if new_df is None: #e.g. the pull failed, then use last successful pull
             new_df=old_df
             break
 
@@ -289,7 +292,7 @@ def get_incidents_chicago(limit,search=None):
 
     Inputs:
         limit (int): how many incidents to pull
-        search (str): optional filter term, default None 
+        search (str): optional filter term, default None
 
     Return:
         citizen_dict (dict): dictionary of incident dictionaries
@@ -308,7 +311,7 @@ def convert_dt(timestamp):
 
 def get_incidents(lat_long,limit,search=None):
     '''
-    pulls incidents from citizen.com/explore 
+    pulls incidents from citizen.com/explore
 
     Inputs:
         lat_long (tuple): min latitude, min longitude, max latitude, max longitude integers
@@ -328,12 +331,12 @@ def get_incidents(lat_long,limit,search=None):
             params.append(SEARCH_CLEANED[search])
         except KeyError:
             params.append(search)
-        
+
     url=api_url.format(*params)
     request=requests.get(url) #add max-age cache-control for refreshes
-    
+
     citizen_dict=request.json()
-    
+
     try:
         results_df=pd.DataFrame(citizen_dict['hits'])
         return results_df

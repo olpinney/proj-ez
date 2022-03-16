@@ -19,13 +19,16 @@ def read_sheet():
     url_1 = sheet_url.replace('/edit#gid=', '/export?format=csv&gid=')
 
     mock = pd.read_csv(url_1)
-    mock.rename(columns = {'House Number' : 'house_num', 'Street Name': 'street_name', 'Street Type': 'street_type',
+    mock.rename(columns = {'House Number' : 'house_num', 'Street Name': 'street_name',
+        'Street Type': 'street_type',
         'Intersecting Street Name': 'street_intersection',
         'Date of Incident (only needed if this form is filled out after the date of incident has passed) ': 'date',
         'Time of incident (best estimate)': 'time', 'Incident Type': 'primary_type',
-        'Was the incident attempted or completed?': 'attempted', 'Did ECCSC arrive before Chicago Police?': 'before_police',
+        'Was the incident attempted or completed?': 'attempted',
+        'Did ECCSC arrive before Chicago Police?': 'before_police',
         'Were there other community street outreach organizations on the scene?': 'orgs_at_scene',
-        'If yes, list the organization(s)': 'orgs', 'How did ECCSC hear about the incident? ': 'alerted_by',
+        'If yes, list the organization(s)': 'orgs',
+        'How did ECCSC hear about the incident? ': 'alerted_by',
         'Optional: Additional notes / commentary': 'notes'}, inplace = True)
     util.insert_sql(mock, 'mock')
     

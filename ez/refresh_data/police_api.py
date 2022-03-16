@@ -48,8 +48,7 @@ def download_relevant_data(file_name, start_date, end_date):
         df = pd.DataFrame.from_dict(response)
         os += 50
         util.insert_sql(df,'Chi_Data_Portal',sql_path=SQL_PATH)
-        
-        
+
 def wrapper(start_date, end_date):
     '''
     Creates intervals between start and end data and pulls data between that interval
@@ -64,7 +63,6 @@ def wrapper(start_date, end_date):
         print("pulling from {i} to {j}".format(i = intervals[i], j = intervals[i+1]))
         download_relevant_data('crime_data'+'{}'.format(i), intervals[i], intervals[i+1])
 
-
 def call_api():
     '''
     calls the police_api module
@@ -76,4 +74,3 @@ def call_api():
 
 if __name__ == "__main__":
     call_api()
-

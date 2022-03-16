@@ -1,14 +1,14 @@
 '''
 Util functions for saving data
 
-Author:Olivia Pinney 
+Author:Olivia Pinney
 proj-ez
 '''
 
-import pandas as pd
 import os
 import sqlite3
 import sys
+import pandas as pd
 
 SQL_PATH="proj_ez.sqlite3"
 
@@ -48,7 +48,7 @@ def drop_table(table_name):
 
     #delete old table
     try:
-        query= f"drop table {table_name}"  
+        query= f"drop table {table_name}"
         c.execute(query).fetchall()
     except sqlite3.OperationalError:
         print("table already dropped")
@@ -61,7 +61,7 @@ def get_cursor(sql_path=SQL_PATH):
         path (str): file path to sql file
 
     Returns:
-        (cursor): cursor to sql  
+        (cursor): cursor to sql
 
     '''
     if os.path.abspath(os.curdir) == "C:\Windows\system32":
@@ -78,14 +78,14 @@ def get_connection(sql_path=SQL_PATH):
         path (str): file path to sql file
 
     Returns:
-        (connection): connection to sql  
+        (connection): connection to sql
     '''
     return sqlite3.connect(sql_path)
 
 def last_updated(table_name, date_col):
     '''
     pull data from citizen until SQL filled back to last saved incident
-    
+
     Inputs
         table_name (str): name of table in sql
         date_col (str): name of date column in sql table
@@ -97,15 +97,15 @@ def last_updated(table_name, date_col):
 
     #pull in old data
     try:
-        query= f"select {date_col} from {table_name}" #specifically for the citizen table 
+        query= f"select {date_col} from {table_name}" #specifically for the citizen table
         old_dates=c.execute(query).fetchall()
         if 'citizen' in table_name:
             old_dates_cleaned=[int(date[0]) for date in old_dates]
             max_old_date=max(old_dates_cleaned)
         else:
-            max_old_date=max(old_dates)[0][:19] 
-        
+            max_old_date=max(old_dates)[0][:19]
+
     except sqlite3.OperationalError:
         max_old_date=0
-    
+
     return max_old_date
