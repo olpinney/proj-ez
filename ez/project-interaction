@@ -1,0 +1,23 @@
+#!/bin/bash
+
+echo 'Please enter what you want to do: '
+options=("Run record link analysis" "Open Map of ECCSC Responses" "Go home and grab a drink")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Run record link analysis")
+            echo "You chose to run record link analysis"
+            python3 __main__,py "run"
+            ;;
+        "Open Map of ECCSC Responses")
+            echo "You chose to open map of ECCSC responses"
+            python3 __main__.py "map"
+            ;;
+        "Go home and grab a drink")
+            echo "You chose to go home and grab a drink"
+            echo "Well earned, enjoy!"
+            break
+            ;;
+        *) echo "invalid option $REPLY";;
+    esac
+done
