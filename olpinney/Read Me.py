@@ -15,15 +15,12 @@ c.citizen_searches_refresh()
 
 #to delete sql object and create a new one:
 c.reset_citizen(limit) #pick a 1000 limit 
-c.citizen_backfill() #to backfill with old data 
+c.citizen_backfill('citizen') #to backfill with old data 
 OR
 c.citizen_searches_reset_and_backfill()
 
 #To see the results
 x=c.citizen_get_sql(search="{desired search term}",table_name="citizen")
-
-x=c.citizen_get_sql(table_name="citizen")
-
 
 #to pull from citizen 
 y=c.get_incidents_chicago(limit) #select limit= how many rows you want
