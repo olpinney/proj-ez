@@ -16,7 +16,7 @@ TIME_UPPER_BOUND = 1
 
 def go():
     """
-    Runs entire py file. Creates Citizen and Chicago dataframes from sql 
+    Runs entire py file. Creates Citizen and Chicago dataframes from sql
     queries to sqlite databse. Cleans data i.e. formates lat/long columns,
     deduplicates and calls record_link to find matches.
 
@@ -34,27 +34,35 @@ def go():
     chi_df = chi_df.drop_duplicates(keep = 'first')
     citizen_df = citizen_df.drop_duplicates(keep = 'first')
 
-    link_records(citizen_df, chi_df, DIST_LOWER_BOUND, DIST_UPPER_BOUND, TIME_LOWER_BOUND, TIME_UPPER_BOUND )
+    link_records(citizen_df, chi_df, DIST_LOWER_BOUND, DIST_UPPER_BOUND,
+                    TIME_LOWER_BOUND, TIME_UPPER_BOUND )
     print_date_timeframes(citizen_df, chi_df)
 
 def print_date_timeframes(citizen_df, chi_df):
     """
-    Call to print out the duration of each dataframe and overlap of dates between them
+    Prints record link analysis summary for user to have brief
+    description of data captured in the csv
+
     Inputs:
-        citizen_df(df)
-        chi_df(df)
+        citizen_df(pandas df) data scraped from Citizen
+        chi_df(pandas df) data extracted from Chicago Portal's API
     """
     earliest_match_date = max(chi_df['date'].min(), citizen_df['date'].min())
     latest_match_date = min(chi_df['date'].max(), citizen_df['date'].max())
-    print("Chicago Data Portal:", "Start", chi_df['date'].min(),  "End", chi_df['date'].max())
-    print("Citizen:", "Start", citizen_df['date'].min(), "End", citizen_df['date'].max())
-    print("Overlap", earliest_match_date, "to", latest_match_date)
-    print("Num days of overlap", latest_match_date - earliest_match_date)
+    print("Record link analysis summary: \n")
+    print("Chicago Crime data starts on", chi_df['date'].min(),
+            " and ends on", chi_df['date'].max(), "\n")
+    print("Citizen data starts on", citizen_df['date'].min(), " and ends on",
+            citizen_df['date'].max(), "\n")
+    print("The Chicago Crime and Citizen data overlap on the following days: \n",
+            earliest_match_date, "to", latest_match_date)
+    print("Number of matches found: ")
+
 
 def clean_lat_long(df, source):
     """
     Updates each dataframe in place to insert a lat_long
-    column, a tuple of lat (float), long (float). 
+    column, a tuple of lat (float), long (float).
 
     Inputs:
         df (pandas df): dataframe to update lat/long for
@@ -69,15 +77,15 @@ def clean_lat_long(df, source):
 
 def reported_difference_in_dist(loc_1, loc_2, lower_bound, upper_bound):
     """
-    Takes in two lat/long tuples and finds the geodesic distance between the 
+    Takes in two lat/long tuples and finds the geodesic distance between the
     two points. Uses lower and upper bound limits to determine likelihood of
-    accurate match. Rturns True if within distance of lower and upper bound 
+    accurate match. Rturns True if within distance of lower and upper bound
     from eachother
-    
-    Inputs: 
+
+    Inputs:
         loc_1(tuple): lat/long values for location 1
         loc_2(tuple): lat/long values for location 2
-        lower_bound (int): distance in miles 
+        lower_bound (int): distance in miles
         uper_bound (int): distance in miles
 
     Returns (boolean)
@@ -90,16 +98,16 @@ def reported_difference_in_dist(loc_1, loc_2, lower_bound, upper_bound):
 
 def standard_date_time(df, source):
     """
-    Recieves 13-digit unix time/date format from citizen. 
+    Recieves 13-digit unix time/date format from citizen.
     This function updates the dataframe in-place. It updates
     the "created_at" field and replaces it with a date time object
 
     Inputs:
         df
-        source (str): chi or citizen, to handle different date formats 
+        source (str): chi or citizen, to handle different date formats
         accordingly
 
-    Returns (pandas dataframe) updates date col in place and 
+    Returns (pandas dataframe) updates date col in place and
         replaces with a datetime object
     """
     dt_objs = []
@@ -120,11 +128,15 @@ def standard_date_time(df, source):
     df['time'] = time_objs
     return df
 
-def link_records(citizen, chi, dist_lower_bound, dist_upper_bound, time_lower_bound, time_upper_bound):
+def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
+                    time_lower_bound, time_upper_bound):
     """
-    Takes in two datasets and compares location and time of crime events in each dataframe. If the time between
-    event is within the lower bound and upper bound time from time of event and the distance between events is
-    within distance bounds provided the two event sare considered a match and outputed to csv file. 
+    Takes in two datasets and compares location and time of crime events 
+    in each dataframe. If the time between event is within the lower bound and 
+    upper bound time from time of event and the distance between events is
+    within distance bounds provided the two event sare considered a match 
+    and outputed to csv file.
+    
     Inputs:
         citizen (df):dataframe created from citizen website
         chi (df): chicago data portal dataframe

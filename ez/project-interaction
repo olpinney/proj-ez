@@ -11,7 +11,7 @@ do
             echo "You are still in options menu, reminder:"
             echo "1 to run record link analysis"
             echo "2 to open map of ECCSC responses"
-            echo "3 to quit program"
+            echo "3 to go home and grab a drink (quits program)"
             ;;
         "Open Map of ECCSC Responses")
             echo "You chose to open map of ECCSC responses"
@@ -19,7 +19,7 @@ do
             echo "You are still in options menu, reminder:"
             echo "1 to run record link analysis"
             echo "2 to open map of ECCSC responses"
-            echo "3 to quit program"
+            echo "3 to go home and grab a drink (quits program)"
             ;;
         "Go home and grab a drink")
             echo "You chose to go home and grab a drink"
