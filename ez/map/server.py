@@ -12,10 +12,13 @@ import dash_leaflet as dl
 import dash_leaflet.express as dlx
 from dash_extensions.javascript import assign
 from record_link import get_lat_long, get_header, go
+from ez.refresh_data import sql_query
 
-_,_,df = go()
+
+mock_df = sql_query.create_survery_df()
+
 points = []
-for i,row in df.iterrows():
+for i,row in mock_df.iterrows():
     if row["lat_long"] != (None,None):
         points.append(dict(lat=row["lat_long"][0],lon=row["lat_long"][1],value=row["primary_type"]))
 
