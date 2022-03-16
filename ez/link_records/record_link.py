@@ -1,12 +1,16 @@
+'''
+This file analyzes Chicago Crime and Citizen data to identify
+matches between two data sources. Matches are then written to a csv
+file called match_file.cvs
+'''
 
-import pandas as pd
-from geopy.geocoders import Nominatim as nom
-from geopy import distance
-import datetime
-import sqlite3
-import ast
-import numpy as np
 import csv
+# import ast
+# import sqlite3
+import datetime
+import pandas as pd
+# from geopy.geocoders import Nominatim as nom
+from geopy import distance
 from refresh_data import sql_query
 
 DIST_LOWER_BOUND = 0
@@ -55,8 +59,8 @@ def print_date_timeframes(citizen_df, chi_df):
     print("Citizen data starts on", citizen_df['date'].min(), " and ends on",
             citizen_df['date'].max(), "\n")
     print("The Chicago Crime and Citizen data overlap on the following days: \n",
-            earliest_match_date, "to", latest_match_date)
-    print("Number of matches found: ")
+            earliest_match_date, "to", latest_match_date, "\n")
+    print("A cvs file called match_file.csv has been created")
 
 
 def clean_lat_long(df, source):
@@ -112,7 +116,7 @@ def standard_date_time(df, source):
     """
     dt_objs = []
     time_objs = []
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         timestamp = row['date']
         if source == "citizen":
             timestamp = float(timestamp)
@@ -131,16 +135,16 @@ def standard_date_time(df, source):
 def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
                     time_lower_bound, time_upper_bound):
     """
-    Takes in two datasets and compares location and time of crime events 
-    in each dataframe. If the time between event is within the lower bound and 
+    Takes in two datasets and compares location and time of crime events
+    in each dataframe. If the time between event is within the lower bound and
     upper bound time from time of event and the distance between events is
-    within distance bounds provided the two event sare considered a match 
+    within distance bounds provided the two event sare considered a match
     and outputed to csv file.
-    
+
     Inputs:
         citizen (df):dataframe created from citizen website
         chi (df): chicago data portal dataframe
-        dist_lower_bound (int): distance in miles 
+        dist_lower_bound (int): distance in miles
         dist_uper_bound (int): distance in miles
         time_lower_bound (int): time in hours
         time_uper_bound (int): time in hours
@@ -159,7 +163,8 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
         suffix2 = '_chi'
         larger_df = chi
 
-    header = list(smaller_df.add_suffix(suffix).columns) + list(larger_df.add_suffix(suffix2).columns)
+    header = list(smaller_df.add_suffix(suffix). \
+                columns) + list(larger_df.add_suffix(suffix2).columns)
 
     with open('match_file.csv', "w") as file:
         spamwriter = csv.writer(file, delimiter = ",")
@@ -169,12 +174,11 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
             for _,large_row in filtered_df.iterrows():
                 #fix time to handle edge cases
                 if small_row['time'].hour >= large_row['time'].hour - time_lower_bound and \
-                    small_row['time'].hour <= large_row['time'].hour + time_upper_bound:
-                    match = reported_difference_in_dist(small_row['lat_long'], large_row['lat_long'], dist_lower_bound, dist_upper_bound) #can pass different upper,lower 
+                    small_row['time'].hour <= large_row['time'].hour \
+                                                    + time_upper_bound:
+                    match = reported_difference_in_dist(small_row['lat_long'],
+                            large_row['lat_long'], dist_lower_bound, dist_upper_bound)
                     if match:
                         output = pd.concat([small_row, large_row], axis=0)
                         output[4] = str(output[4]).replace(", ", "")
                         spamwriter.writerow(output)
-
-
-

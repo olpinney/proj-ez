@@ -13,6 +13,5 @@ def run(sys_arg):
         record_link.go()
     elif sys_arg == "map":
         server.create_map()
-    print("end")
 
 
