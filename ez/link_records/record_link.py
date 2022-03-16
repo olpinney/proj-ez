@@ -7,7 +7,7 @@ import sqlite3
 import ast
 import numpy as np
 import csv
-from data import sql_query
+from refresh_data import sql_query
 
 
 # chi_data = 'Violence_Reduction_-_Victims_of_Homicides_and_Non-Fatal_Shootings.csv'
@@ -253,6 +253,7 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound, time_lower_bo
                         output = pd.concat([small_row, large_row], axis=0)
                         print(output)
                         print(output[4])
+                        output[4] = str(output[4]).replace(", ", "")
                         spamwriter.writerow(output)
 
 

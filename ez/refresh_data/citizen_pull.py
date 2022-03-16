@@ -12,8 +12,6 @@ import requests
 import util
 import datetime
 import json
-from ez.refresh_data import util
-
 
 #can remove
 import csv
@@ -22,6 +20,7 @@ PULL_SCALING=2
 TABLE_NAME='citizen'
 
 #our table names for target citizen search categories
+DATA_PATH="../data/data"
 SEARCH_CLEANED={None:None,'Assault':'Assault / Fight','Break_In':'Break In','Gun':'Gun Related','Harassment':'Harassment','Police':'Police Related','Pursuit':'Pursuit / Search','Theft':'Robbery / Theft','Weapon':'Weapon'}
 
 #estimated starting searches based on incident frequency
@@ -41,7 +40,7 @@ def citizen_searches_refresh(searches=SEARCH_CLEANED.keys()):
         else:
             citizen_refresh(search=search)
 
-def citizen_searches_reset_and_backfill(searches=SEARCH_CLEANED.keys(),table_name=TABLE_NAME,file_path="olpinney/data"):
+def citizen_searches_reset_and_backfill(searches=SEARCH_CLEANED.keys(),table_name=TABLE_NAME,file_path=DATA_PATH):
     '''
     resets and backfills all designated citizen tables 
     
@@ -93,7 +92,7 @@ def reset_citizen(limit=1000,search=None,table_name=TABLE_NAME):
     new_df_cleaned=clean_citizen(new_df)
     util.insert_sql(new_df_cleaned,table_name_w_search)
 
-def citizen_backfill(search=None,table_name=TABLE_NAME,file_path="olpinney/data"):
+def citizen_backfill(search=None,table_name=TABLE_NAME,file_path=DATA_PATH):
     '''
     Back fills SQL table using csvs
     
@@ -207,7 +206,7 @@ def save_citizen_csv(new_df,search=None,table_name=TABLE_NAME):
 
 
     #save data 
-    util.df_to_csv(new_df,f"olpinney/data/{table_name_w_search}_{max_month}-{max_year}.csv")
+    util.df_to_csv(new_df,f"{DATA_PATH}/{table_name_w_search}_{max_month}-{max_year}.csv")
 
 def add_cleaned_search(search,table_name):
     '''
@@ -233,7 +232,8 @@ def clean_citizen(df):
     '''
     df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat']) 
     df['long']=df["_geoloc"].apply(lambda x: x[0]['lng']) 
-    df['categories']=df['categories'].apply(lambda x: ", ".join(x))
+    # df['categories']=df['categories'].apply(lambda x: ", ".join(x))
+    df['categories']=df['categories'].apply(lambda x: ", ".join(x) if isinstance(x,list) else x)
 
     to_drop=['_geoloc','updates','city_code','ranking.level','ranking.has_video','ranking.views','ranking.notifications','_highlightResult']
     df=df.drop(columns=to_drop)
