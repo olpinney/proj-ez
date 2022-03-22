@@ -1,0 +1,84 @@
+Note on the Rubric 
+------------------
+Although some of the grading criteria may appear subjective to you, I was as objective as possible and assigned almost all the grades using checkpoints on the essential parts that we required for the project. 
+
+The soft criterium I used is mostly concentrated on items #2 (Data Analysis) and #3 (Scope and Complexity). The final grade for those items resulted from an evaluation of all the projects as a whole. I also recognized in those rubrics team's effort and dedication. I considered a project more complex if it required different types of skills and used more diverse content we covered in during the quarter (e.g., if the team downloaded and used two ready-to-use data sets VS if the data was constructed using complex webscraping, data cleaning, record linkage, used more advanced data vis packages (e.g., Django, dash, etc.) and everything was stored in a relational SQL database).
+
+Please note that these grades are final! I will not make any grade adjusts unless it is due to an arithmetic error, even if you feel the deduction is too much. Project scores are final. 
+
+As always with assignments, feel free to reach out if you do have any questions about improvement or clarification. Please respond via email if you do have any questions (not on Ed). I will be busy preparing for the next quarter so I may not have a chance to respond right away. 
+
+----------------
+Project Deliverable #3 (Paper Evaluation: 10 % of grade) 
+
+
+Total Points 10 /10
+
+
+Overall Comments: None. Paper fulfilled all requirements. 
+
+
+--------------------------
+Project Deliverable #3 (Software Evaluation: 35 % of grade):
+
+    - Project Requirements (See point breakdown below):
+        Points Possible: 70
+        Points Obtained: 65
+
+    - Design & Code Style: 
+        Points Possible: 15
+        Points Obtained: 15
+
+    - Program usability:
+        Points Possible: 15
+        Points Obtained: 8
+
+
+Total Points:  88 / 100 
+
+Breakdown of Project Requirements:       
+	
+  - Fulfills requirement #1: Two Data Sources(Web or API and another source)
+        Points Possible: 15
+        Points Obtained: 15
+
+  - Fulfills requirement #2: Data analysis component
+        Points Possible: 15
+        Points Obtained: 15
+
+  - Fulfills requirement #3: Project Scope & Complexity
+        Points Possible: 10
+        Points Obtained: 10
+
+  - Fulfills requirement #4: Visualization or Textual Component
+        Points Possible: 15
+        Points Obtained: 15
+
+
+  - Fulfills requirement #5,  #6, #7: Project structure and Virtual Environment 
+        Points Possible: 15
+        Points Obtained: 10
+
+
+
+
+
+Overall Comments: The core idea for the project is a great one! I think it's important to provide a means for  offering first responders as an alternative to the police. However, I had difficulties getting your project to run and also there's not much interaction going on in the project:
+
+
+1. Program usability deduction: You need to update the README.md and paper with more information about installing your project. You state to install the project from proj-ez but you do not have the requirements.txt file in the same directory as your install script so it fails to actually install. Also in your instructions it says to run it as follows: 
+
+python3 __main__.py
+
+However, it produces the following error: 
+
+Traceback (most recent call last):
+  File "/Users/lamont/uchicago/classes/capp30122/repos/groups/win22/proj-ez/ez/__main__.py", line 5, in <module>
+    app.run(sys.argv[1])
+IndexError: list index out of range
+
+Because you didn't specify in your readme that I have to provide a command line argument. I figured it out by looking over your code but it should have been stated in the README. 
+
+2. There's hardly any type of interaction with the application. User interaction should be able to modify your Dash application to potentially produce an updated visualization or some update to your app happens. There's no data that is being pulled up when I click on the map and there's no information on the map that provides a description on what I'm looking at. Right now, when running the dash application, I'm just presented with a big map centered around Chicago with pinpoints and numbers but no way to get more information from these pin points when clicking on it or even running the application in a different configuration. 
+
+
