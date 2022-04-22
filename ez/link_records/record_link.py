@@ -6,7 +6,13 @@ file called match_file.cvs
 
 import csv
 import datetime
+from this import d
 import pandas as pd
+import geopandas as gpd
+from geopy.geocoders import Nominatim
+from shapely.geometry import Point
+from shapely.geometry import shape
+import matplotlib.pyplot as plt
 from geopy import distance
 from refresh_data import sql_query
 
@@ -38,6 +44,8 @@ def go():
     link_records(citizen_df, chi_df, DIST_LOWER_BOUND, DIST_UPPER_BOUND,
                     TIME_LOWER_BOUND, TIME_UPPER_BOUND )
     print_date_timeframes(citizen_df, chi_df)
+
+    return citizen_df, chi_df
 
 def print_date_timeframes(citizen_df, chi_df):
     """
@@ -166,7 +174,7 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
     with open('match_file.csv', "w") as file:
         spamwriter = csv.writer(file, delimiter = ",")
         spamwriter.writerow(header)
-        for _,small_row in smaller_df.iterrows():
+        for _, small_row in smaller_df.iterrows():
             filtered_df = larger_df.loc[larger_df['date'] == small_row['date']]
             for _,large_row in filtered_df.iterrows():
                 #fix time to handle edge cases
@@ -176,6 +184,46 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
                     match = reported_difference_in_dist(small_row['lat_long'],
                             large_row['lat_long'], dist_lower_bound, dist_upper_bound)
                     if match:
+                        small_row = reverse_geocode(small_row)
                         output = pd.concat([small_row, large_row], axis=0)
                         output[4] = str(output[4]).replace(", ", "")
                         spamwriter.writerow(output)
+
+def reverse_geocode(df_row):
+    """
+    """
+    locator = Nominatim(user_agent="ecjackson1821@gmail.com")
+    coordinates = (df_row["latitude"], df_row['longitude'])
+    location = locator.reverse(coordinates)
+    ## need to add row dataframe
+    neighborhood = location.raw["address"]["neighbourhood"]
+    df_row = pd.concat([df_row, ], axis = 0)
+    return df_row
+
+    # results = gpd.GeoDataFrame(df_row,   geometry=gpd.points_from_xy(df_row.longitude, df_row.latitude))
+    # geojson_neighborhoods = "link_records/Boundaries - Neighborhoods.geojson"
+    # neighborhoods = gpd.read_file(geojson_neighborhoods)
+
+
+def create_map(df):
+    """
+    """
+    # Load boundaries
+    # file = open('data/boundaries.geojson')
+    file = open('link_records/Boundaries - Neighborhoods.geojson')
+    boundaries = gpd.read_file(file) 
+
+    # Convert full crime dataset from pandas to geopandas
+    plot_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df['latitude'], df['longitude']),
+                                crs='EPSG:4326')
+
+    # Make plot
+    fig, ax = plt.subplots(1, figsize=(12, 16))
+    boundaries.plot(ax=ax, color='white', edgecolor='black')
+    crime_type = {'gun related' : 'red'}
+    grouped = plot_gdf.groupby("primary_type", sort=True)
+    # for key in colors:
+    #     group = grouped.get_group(key)
+    grouped.plot(ax=ax, label= 'gun related', markersize=0.3)
+    ax.axis('off')
+    ax.set_title('Reported Incidents in Chicago', fontdict={'fontsize': '25', 'fontweight' : '3'});
