@@ -184,7 +184,7 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
                     match = reported_difference_in_dist(small_row['lat_long'],
                             large_row['lat_long'], dist_lower_bound, dist_upper_bound)
                     if match:
-                        small_row = reverse_geocode(small_row)
+                        # small_row = reverse_geocode(small_row)
                         output = pd.concat([small_row, large_row], axis=0)
                         output[4] = str(output[4]).replace(", ", "")
                         spamwriter.writerow(output)
@@ -199,6 +199,8 @@ def reverse_geocode(df_row):
     neighborhood = location.raw["address"]["neighbourhood"]
     df_row = pd.concat([df_row, ], axis = 0)
     return df_row
+
+
 
     # results = gpd.GeoDataFrame(df_row,   geometry=gpd.points_from_xy(df_row.longitude, df_row.latitude))
     # geojson_neighborhoods = "link_records/Boundaries - Neighborhoods.geojson"
