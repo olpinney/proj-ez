@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo 'Please enter what you want to do: '
-options=("Run record link analysis" "Open Map of ECCSC Responses" "Go home and grab a drink")
+options=("Run record link analysis" "Open Map of ECCSC Responses" "Close program")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -11,7 +11,7 @@ do
             echo "You are still in options menu, reminder:"
             echo "1 to run record link analysis"
             echo "2 to open map of ECCSC responses"
-            echo "3 to go home and grab a drink (quits program)"
+            echo "3 to close this program"
             ;;
         "Open Map of ECCSC Responses")
             echo "You chose to open map of ECCSC responses"
@@ -19,11 +19,9 @@ do
             echo "You are still in options menu, reminder:"
             echo "1 to run record link analysis"
             echo "2 to open map of ECCSC responses"
-            echo "3 to go home and grab a drink (quits program)"
+            echo "3 to close this program"
             ;;
-        "Go home and grab a drink")
-            echo "You chose to go home and grab a drink"
-            echo "Well earned, enjoy!"
+        "Close program")
             echo "Closing program"
             break
             ;;
