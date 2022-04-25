@@ -6,15 +6,18 @@ file called match_file.cvs
 
 import csv
 import datetime
-from this import d
+import itertools
+# from this import d
+# from turtle import shape
 import pandas as pd
 import geopandas as gpd
 from geopy.geocoders import Nominatim
-from shapely.geometry import Point
-from shapely.geometry import shape
+# from shapely.geometry import Point
+# from shapely.geometry import shape
 import matplotlib.pyplot as plt
-from geopy import distance
-from refresh_data import sql_query
+# from geopy import distance
+# from refresh_data import sql_query
+# from ez/refresh_data import sql_query 
 
 DIST_LOWER_BOUND = 0
 DIST_UPPER_BOUND = .25
@@ -184,48 +187,72 @@ def link_records(citizen, chi, dist_lower_bound, dist_upper_bound,
                     match = reported_difference_in_dist(small_row['lat_long'],
                             large_row['lat_long'], dist_lower_bound, dist_upper_bound)
                     if match:
-                        # small_row = reverse_geocode(small_row)
                         output = pd.concat([small_row, large_row], axis=0)
                         output[4] = str(output[4]).replace(", ", "")
                         spamwriter.writerow(output)
 
-def reverse_geocode(df_row):
+
+def write_gpd_to_csv(joined):
     """
     """
-    locator = Nominatim(user_agent="ecjackson1821@gmail.com")
-    coordinates = (df_row["latitude"], df_row['longitude'])
-    location = locator.reverse(coordinates)
-    ## need to add row dataframe
-    neighborhood = location.raw["address"]["neighbourhood"]
-    df_row = pd.concat([df_row, ], axis = 0)
-    return df_row
+    # joined = joined.drop('MultiPolygon', 1)
+    header = ['pri_neigh', 'sec_neigh', 'shape_are' , 'shape_len', 'geometry',
+                                                 'index_right',	'description_citizen', 'date_citizen', 'latitude_citizen',
+                                                  'longitude_citizen', 'primary_type_citizen', 'lat_long_citizen', 'time_citizen',
+                                                   'date_chi', 'latitude_chi', 'longitude_chi', 'primary_type_chi',	'description_chi',
+                                                    'lat_long_chi', 'time_chi']
+    with open('neighborhoods.csv', "w") as file:
+        spamwriter = csv.writer(file, delimiter = ",")
+        spamwriter.writerow(header)
+        joined = joined.drop('geometry', 1)
+        for _, row in joined.iterrows():
+            spamwriter.writerow(row)
 
 
 
-    # results = gpd.GeoDataFrame(df_row,   geometry=gpd.points_from_xy(df_row.longitude, df_row.latitude))
-    # geojson_neighborhoods = "link_records/Boundaries - Neighborhoods.geojson"
-    # neighborhoods = gpd.read_file(geojson_neighborhoods)
+def csv_tp_gdf_point(filepath, xcol, ycol):
+	'''
+	Helper function to read in csv and create points geodataframe
+	'''
+	df = pd.read_csv(filepath)
+	return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df[xcol], df[ycol]))
+
+def join_point_count_by_poly(polys, points, groupby_col, count_col):
+	'''
+	Helper function to join polys and points and create count of points in polys
+	'''
+	joined = gpd.sjoin(polys, points)
+	return pd.DataFrame(joined.groupby(groupby_col)[count_col].count()).reset_index(), joined
 
 
-def create_map(df):
-    """
-    """
-    # Load boundaries
-    # file = open('data/boundaries.geojson')
-    file = open('link_records/Boundaries - Neighborhoods.geojson')
-    boundaries = gpd.read_file(file) 
-
-    # Convert full crime dataset from pandas to geopandas
-    plot_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df['latitude'], df['longitude']),
-                                crs='EPSG:4326')
-
-    # Make plot
-    fig, ax = plt.subplots(1, figsize=(12, 16))
-    boundaries.plot(ax=ax, color='white', edgecolor='black')
-    crime_type = {'gun related' : 'red'}
-    grouped = plot_gdf.groupby("primary_type", sort=True)
-    # for key in colors:
-    #     group = grouped.get_group(key)
-    grouped.plot(ax=ax, label= 'gun related', markersize=0.3)
+def plot_points(base_gdf, points, points_color='blue'):
+    '''
+    Plot points data over base polygon map
+    '''
+    fig, ax = plt.subplots(figsize=(10,10))
+    base_gdf.boundary.plot(color='grey',alpha=0.3, ax=ax)
+    points.plot(ax=ax, markersize=1, legend=True, color=points_color)
     ax.axis('off')
-    ax.set_title('Reported Incidents in Chicago', fontdict={'fontsize': '25', 'fontweight' : '3'});
+    plt.show()
+
+
+def plot_choropleth(gdf, column, cmap='Blues'):
+    '''
+    Plot choropleth map 
+    '''
+    fig, ax = plt.subplots(figsize=(10,10))
+    gdf.plot(ax=ax, column=column, legend=True, cmap=cmap)
+    ax.axis('off')
+    plt.show()
+
+
+def run(xcol, ycol, count_by):
+    """
+    """
+    tract_polys = gpd.read_file("neighborhood_bounds.geojson")
+    points_gdf = csv_tp_gdf_point('match_file.csv', xcol, ycol).set_crs(epsg=4326)
+    plot_points(tract_polys, points_gdf)
+    tract_counts, joined = join_point_count_by_poly(tract_polys, points_gdf, 'sec_neigh', count_by) 
+    tract_count_polys = tract_polys.merge(tract_counts, on='sec_neigh').set_geometry('geometry')
+    plot_choropleth(tract_count_polys, count_by)
+    return joined
