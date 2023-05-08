@@ -9,12 +9,12 @@ Primary functions:
     citizen_refresh() pulls 1000 records or all records since the last pull (whichever is smaller)
         and saves records into sql and csv backups. Set to Chicago
     reset_citizen() deletes sql table and resets it with 1000 records. Set to Chicago
-    citizen_backfill() backfulls sql table from csvs. Set to Chicago
+    citizen_backfill() backfills sql table from csvs. Set to Chicago
 
 Suggested file structure:
-    #Parent folder
-        syntax #folder storing code
-        data #folder storing data (if named otherwise, change DATA_PATH variable)
+    Parent folder
+        syntax :folder storing code
+        data: folder storing data (if named otherwise, change DATA_PATH variable)
 
 Caution: uses global variables, which should be set to individual purposes
 
@@ -32,7 +32,7 @@ import datetime
 import json
 
 
-PULL_SCALING=2 #factor to increase pull by when pull is too small
+PULL_SCALING=2 #factor to scale up size of pull when pull is too small
 STARTING_PULL=100
 TABLE_NAME='citizen' #sql table name
 DATA_PATH="../data" #where csv files are saved for backfill
