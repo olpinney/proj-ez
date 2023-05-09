@@ -1,7 +1,9 @@
 '''API requests from Citizen (https://citizen.com/explore)
 
-Script pulls up to 1000 records from the Citizen website interface
-Currently set to pull data in the Chicago region, but can be set for other geographies
+Data scraping script designed to be run daily (via bash script) for data collection from the Citizen App. 
+Script pulls records from the Citizen website interface for specified geography and saves them to database. 
+Records are saved to SQL table and to csvs for backup purposes. Script can reset SQL table and backfill from csvs. 
+Currently set to pull data in the Chicago region, but can be set for other geographies.
 
 Primary functions:
     __main__() calls citizen_refresh() 
