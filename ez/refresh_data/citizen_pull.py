@@ -13,12 +13,12 @@ Primary functions:
 
 Suggested file structure:
     Parent folder
-        syntax :folder storing code
+        syntax: folder storing code
         data: folder storing data (if named otherwise, change DATA_PATH variable)
 
-Caution: uses global variables, which should be set to individual purposes
+Caution: uses global variables, which should be set for user's machine
 
-Author:Olivia Pinney
+Author: Olivia Pinney
 Updated: March 2022
 
 '''
@@ -32,20 +32,23 @@ import datetime
 import json
 
 
-PULL_SCALING=2 #factor to scale up size of pull when pull is too small
-STARTING_PULL=100
-TABLE_NAME='citizen' #sql table name
-DATA_PATH="../data" #where csv files are saved for backfill
-SQL_PATH="proj_ez.sqlite3" #name of sql file for project ez
+PULL_SCALING = 2 #factor to scale up size of pull when pull is too small
+STARTING_PULL = 100
+TABLE_NAME = 'citizen' #sql table name
+DATA_PATH = "../data" #where csv files are saved for backfill
+SQL_PATH = "proj_ez.sqlite3" #name of sql file for project ez
 
 
-def citizen_refresh(limit:int,table_name=TABLE_NAME) -> None:
+def citizen_refresh(limit : int, table_name = TABLE_NAME) -> None:
     '''
-    Pulls data since latest pull and updates csv and sql
+    Pulls latest records, saves backup data as csv, updates sql with cleaned data
+    
+    Only the most recent 1,000 records are available per location. This tool avoids saving duplicate records by pulling data 
+    until the incidents overlaps with records in SQL database or until 1,000 records are pulled, whichever is smaller. 
 
     Inputs:
         table_name (str): name of table in csv and sql
-        limit (int): how many incidents to pull for first itteration
+        limit (int): number of incidents to pull in smallest pull
 
     '''
     #get data
@@ -55,136 +58,14 @@ def citizen_refresh(limit:int,table_name=TABLE_NAME) -> None:
     new_df_cleaned=clean_citizen(new_df)
     citizen_dedupe_sql(new_df_cleaned,table_name)
 
-def reset_citizen(limit=1000,table_name=TABLE_NAME) -> None:
-    '''
-    Deletes SQL table for citizen and sets it using latest data
-
-    Inputs:
-        table_name (str): name of table in csv and sql
-        limit (int): how many incidents to pull for first itteration
-
-    '''
-    drop_table(table_name)
-    new_df=get_incidents_chicago(limit)
-    save_citizen_csv(new_df,table_name)
-
-    new_df_cleaned=clean_citizen(new_df)
-    insert_sql(new_df_cleaned,table_name)
-
-def citizen_backfill(table_name=TABLE_NAME,file_path=DATA_PATH) -> None:
-    '''
-    Back fills SQL table using csvs
-
-    Inputs:
-        table_name (str): name of table in csv and sql
-        file_path (str): location of data to backfill
-
-    '''
-    sql_df=citizen_get_sql(table_name)
-
-    file_names=os.listdir(file_path)
-
-    for file in file_names:
-        if re.match(f"^{table_name}_\d.*.csv$",file):
-            with open(f"{file_path}/{file}",'r') as file:
-                df=pd.read_csv(file,mangle_dupe_cols=True)
-                #should be false once pandas package supports it
-
-            #make _geoloc back into list containing single dictionary
-            df["_geoloc"]=df["_geoloc"].apply(lambda x: [json.loads(x[1:-1].replace("'", "\""))])
-            #make categories into string from string represetnation of a single entry list
-            df["categories"]=df["categories"].apply(lambda x: x[1:-1].replace("'",""))
-            df_clean=clean_citizen(df)
-            sql_df=pd.concat([sql_df,df_clean])
-
-    overwrite_sql_w_dedup(sql_df,table_name)
-
-
-def citizen_dedupe_sql(new_df:pd.DataFrame,table_name=TABLE_NAME) -> None:
-    '''
-    remove duplicated data between new_df and SQL and replace SQL
-
-    Inputs:
-        new_df (df): new data
-        table_name (str): name of table in sql
-
-    '''
-    #combine the data
-    old_df=citizen_get_sql(table_name)
-
-    df=pd.concat([old_df,new_df])
-    overwrite_sql_w_dedup(df,table_name)
-
-def overwrite_sql_w_dedup(df,table_name=TABLE_NAME) -> None:
-    '''
-    Overwrite sql file with deduplicated data
-
-    Inputs:
-        df (df): updated data
-        table_name (str): name of table in sql
-    '''
-    dedupded_df=df.drop_duplicates(subset='objectID',keep='last')
-
-    #save to sql
-    drop_table(table_name)
-    insert_sql(dedupded_df,table_name)
-
-def citizen_get_sql(table_name=TABLE_NAME) -> pd.DataFrame:
-    '''
-    get citizen data from SQL
-
-    Inputs:
-        table_name (str): name of table in sql
-
-    Output:
-        df (df): deduped df
-    '''
-    connection=sqlite3.connect(SQL_PATH)
-
-    #pull in old data
-    query= f"select * from {table_name}" #specifically for the citizen table
-    df=pd.read_sql(query, con = connection)
-
-    df=df.drop(columns='index')
-
-    return df
-
-
-def save_citizen_csv(new_df:pd.DataFrame,table_name=TABLE_NAME) -> None:
-    '''
-    saves citizen to csv and sql
-
-    Inputs:
-        new_df (df): data to save
-        table_name (str): name of table in csv and sql
-    '''
-
-    #create csv label
-    max_new_date=convert_dt(max(new_df['created_at']))
-    max_month=max_new_date.month
-    max_year=max_new_date.year
-
-    df_to_csv(new_df,f"{DATA_PATH}/{table_name}_{max_month}-{max_year}.csv")
-
-
-def clean_citizen(df:pd.DataFrame) -> pd.DataFrame:
-    '''
-    removes extra columns from citizen data, and fixes lat and long
-    '''
-    df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat'])
-    df['long']=df["_geoloc"].apply(lambda x: x[0]['lng'])
-    # df['categories']=df['categories'].apply(lambda x: ", ".join(x))
-    df['categories']=df['categories'].apply(lambda x: ", ".join(x) if isinstance(x,list) else x)
-
-    to_drop=['_geoloc','updates','city_code','ranking.level','ranking.has_video',
-            'ranking.views','ranking.notifications','_highlightResult']
-    df=df.drop(columns=to_drop)
-
-    return df
-
+    
 def pull_recent(limit:int,table_name:str) -> pd.DataFrame:
     '''
     pull data from citizen until SQL filled back to last saved incident
+    
+    Only the most recent 1,000 records are available per location. This tool avoids saving duplicate records by pulling data 
+    until the incidents overlaps with records in SQL database or until 1,000 records are pulled, whichever is smaller. 
+    
     
     Inputs:
         table_name (str): name of table in sql
@@ -207,7 +88,7 @@ def pull_recent(limit:int,table_name:str) -> pd.DataFrame:
     #pull in new data
     new_df=get_incidents_chicago(limit)
 
-    while max_old_date < min(new_df['created_at']) and limit*PULL_SCALING<=1000: #API restricts pulls at 1000
+    while max_old_date < min(new_df['created_at']) and limit*PULL_SCALING<=1000: #API restricts pulls at 1,000
 
         print(f"max old date is {convert_dt(max_old_date)} while min date is {convert_dt(min(new_df['created_at']))}")
         print(f"limit is {limit}")
@@ -215,7 +96,8 @@ def pull_recent(limit:int,table_name:str) -> pd.DataFrame:
         limit=limit*PULL_SCALING
         old_df=new_df
         new_df=get_incidents_chicago(limit)
-        if new_df is None: #e.g. the pull failed, then use last successful pull
+        if new_df is None: 
+            #e.g. the pull failed, then use last successful pull
             new_df=old_df
             break
 
@@ -224,7 +106,7 @@ def pull_recent(limit:int,table_name:str) -> pd.DataFrame:
 
 def get_incidents_chicago(limit:int) -> pd.DataFrame or None:
     '''
-    pulls incidents from citizen.com/explore specifically for chicago region
+    pulls incidents from citizen.com/explore specifically for Chicago region
 
     Inputs:
         limit (int): how many incidents to pull
@@ -239,6 +121,8 @@ def get_incidents_chicago(limit:int) -> pd.DataFrame or None:
 def get_incidents(lat_long:tuple,limit:int) -> pd.DataFrame or None:
     '''
     pulls incidents from citizen.com/exploreq
+    
+    Scraper calls javascript backend of website data visualizations. Backend limits call to 1,000 incidents  
 
     Inputs:
         lat_long (tuple): min latitude, min longitude, max latitude, max longitude integers
@@ -266,6 +150,22 @@ def get_incidents(lat_long:tuple,limit:int) -> pd.DataFrame or None:
         print(f"limit of {limit} was too big")
         return None
 
+    
+def clean_citizen(df:pd.DataFrame) -> pd.DataFrame:
+    '''
+    removes extra columns from citizen data, and fixes lat and long
+    '''
+    df['lat']=df["_geoloc"].apply(lambda x: x[0]['lat'])
+    df['long']=df["_geoloc"].apply(lambda x: x[0]['lng'])
+    # df['categories']=df['categories'].apply(lambda x: ", ".join(x))
+    df['categories']=df['categories'].apply(lambda x: ", ".join(x) if isinstance(x,list) else x)
+
+    to_drop=['_geoloc','updates','city_code','ranking.level','ranking.has_video',
+            'ranking.views','ranking.notifications','_highlightResult']
+    df=df.drop(columns=to_drop)
+
+    return df
+    
 def convert_dt(timestamp:float) -> datetime.datetime:
     """
     converts unix format for date and time to datetime object
@@ -274,64 +174,12 @@ def convert_dt(timestamp:float) -> datetime.datetime:
     dt_obj = datetime.datetime.fromtimestamp(timestamp)
     return dt_obj
 
-def df_to_csv(df:pd.DataFrame, file_path:str) -> None:
-    '''
-    save pandas to csv, and append if not previously created
-
-    Inputs:
-        results_df (df): data frame with new data
-        path (str): location to save data
-    '''
-    header_bool=(not os.path.exists(file_path))
-
-    with open(file_path,'a') as file:
-        df.to_csv(file,index=True, header=header_bool, line_terminator='\n')
-
-def insert_sql(df:pd.DataFrame,table_name:str,sql_path=SQL_PATH) -> None:
-    '''
-    insert latest data into sql table
-
-    Inputs:
-        incidents (df): dataframe of new data
-        name (str): name of table to insert into
-        path (str): file path to sql file
-
-    '''
-
-    connection = sqlite3.connect(sql_path)
-    df=df.astype('string') #needed this because list objects were giving me issues
-    df.to_sql(table_name, connection, if_exists='append')
-
-def drop_table(table_name:str) -> None:
-    '''
-    drop table from SQL database
-    '''
-    c=get_cursor()
-
-    #delete old table
-    try:
-        query= f"drop table {table_name}"
-        c.execute(query).fetchall()
-    except sqlite3.OperationalError:
-        print("table already dropped")
-
-def get_cursor(sql_path=SQL_PATH) -> sqlite3.Cursor:
-    '''
-    get cursor for sql document
-
-    Inputs:
-        path (str): file path to sql file
-
-    Returns:
-        (cursor): cursor to sql
-
-    '''
-
-    return sqlite3.connect(sql_path).cursor()
 
 def last_updated(table_name:str, date_col:str) -> datetime.datetime or int:
     '''
     pull data from citizen until SQL filled back to last saved incident
+    
+    Error handling ensures that maximum amount of data in pulled in scenario where SQL database is unreachable 
 
     Inputs
         table_name (str): name of table in sql
@@ -356,8 +204,175 @@ def last_updated(table_name:str, date_col:str) -> datetime.datetime or int:
         max_old_date=0
 
     return max_old_date
+    
+    
+def citizen_get_sql(table_name=TABLE_NAME) -> pd.DataFrame:
+    '''
+    get citizen data from SQL table
+
+    Inputs:
+        table_name (str): name of table in sql
+
+    Output:
+        df (df): deduped df
+    '''
+    connection=sqlite3.connect(SQL_PATH)
+
+    #pull in old data
+    query= f"select * from {table_name}" 
+    df=pd.read_sql(query, con = connection)
+
+    df=df.drop(columns='index')
+
+    return df
+    
+def get_cursor(sql_path=SQL_PATH) -> sqlite3.Cursor:
+    '''
+    get cursor for SQL document
+    '''
+    return sqlite3.connect(sql_path).cursor()
+    
+    
+def reset_citizen(limit=1000,table_name=TABLE_NAME) -> None:
+    '''
+    Deletes SQL table for citizen and sets it using latest data pull
+    
+    This function is useful for initializing or resetting a SQL table in the case of a methodology change.
+    See citizen_backfill() for refilling the table 
+
+    Inputs:
+        table_name (str): name of table in csv and sql
+        limit (int): how many incidents to pull for first itteration
+
+    '''
+    drop_table(table_name)
+    new_df=get_incidents_chicago(limit)
+    save_citizen_csv(new_df,table_name)
+
+    new_df_cleaned=clean_citizen(new_df)
+    insert_sql(new_df_cleaned,table_name)
+
+def citizen_backfill(table_name=TABLE_NAME,file_path=DATA_PATH) -> None:
+    '''
+    Back fills SQL table using csvs
+    
+    Run this function after resetting SQL table to backfill from in csv backups.
+    See reset_citizen() for resetting the table
+
+    Inputs:
+        table_name (str): name of table in csv and sql
+        file_path (str): location of data to backfill
+
+    '''
+    sql_df=citizen_get_sql(table_name)
+
+    file_names=os.listdir(file_path)
+
+    for file in file_names:
+        if re.match(f"^{table_name}_\d.*.csv$",file):
+            with open(f"{file_path}/{file}",'r') as file:
+                df=pd.read_csv(file,mangle_dupe_cols=True)
+
+            #make _geoloc into list containing single dictionary
+            df["_geoloc"]=df["_geoloc"].apply(lambda x: [json.loads(x[1:-1].replace("'", "\""))])
+            
+            #make categories into string from string represetnation of a single entry list
+            df["categories"]=df["categories"].apply(lambda x: x[1:-1].replace("'",""))
+            df_clean=clean_citizen(df)
+            sql_df=pd.concat([sql_df,df_clean])
+
+    overwrite_sql_w_dedup(sql_df,table_name)
+
+def citizen_dedupe_sql(new_df:pd.DataFrame,table_name=TABLE_NAME) -> None:
+    '''
+    remove duplicated data between new_df and current SQL table, then replace current SQL table
+
+    Inputs:
+        new_df (df): new data
+        table_name (str): name of table in SQL
+
+    '''
+    #combine the data
+    old_df=citizen_get_sql(table_name)
+
+    df=pd.concat([old_df,new_df])
+    overwrite_sql_w_dedup(df,table_name)
+
+def overwrite_sql_w_dedup(df,table_name=TABLE_NAME) -> None:
+    '''
+    overwrite sql file with deduplicated data
+
+    Inputs:
+        df (df): updated data
+        table_name (str): name of table in SQL
+    '''
+    dedupded_df=df.drop_duplicates(subset='objectID',keep='last')
+
+    #save to SQL
+    drop_table(table_name)
+    insert_sql(dedupded_df,table_name)
 
 
+def insert_sql(df:pd.DataFrame,table_name:str,sql_path=SQL_PATH) -> None:
+    '''
+    insert latest data into sql table
+
+    Inputs:
+        incidents (df): dataframe of new data
+        name (str): name of table to insert into
+        path (str): file path to sql file
+
+    '''
+    connection = sqlite3.connect(sql_path)
+    df=df.astype('string') #converts list objects
+    df.to_sql(table_name, connection, if_exists='append')
+
+def drop_table(table_name:str) -> None:
+    '''
+    drop table from SQL database
+    '''
+    c=get_cursor()
+
+    #delete old table
+    try:
+        query= f"drop table {table_name}"
+        c.execute(query).fetchall()
+    except sqlite3.OperationalError:
+        print("table already dropped")
+
+
+def save_citizen_csv(new_df:pd.DataFrame,table_name=TABLE_NAME) -> None:
+    '''
+    saves citizen data to csv
+
+    Inputs:
+        new_df (df): data to save
+        table_name (str): name of table in csv and sql
+    '''
+
+    #create csv label
+    max_new_date=convert_dt(max(new_df['created_at']))
+    max_month=max_new_date.month
+    max_year=max_new_date.year
+
+    df_to_csv(new_df,f"{DATA_PATH}/{table_name}_{max_month}-{max_year}.csv")
+
+
+def df_to_csv(df:pd.DataFrame, file_path:str) -> None:
+    '''
+    save pandas to csv, and append if not previously created
+
+    Inputs:
+        results_df (df): data frame with new data
+        path (str): location to save data
+    '''
+    header_bool=(not os.path.exists(file_path))
+
+    with open(file_path,'a') as file:
+        df.to_csv(file,index=True, header=header_bool, line_terminator='\n')
+
+    
+    
 if __name__ == "__main__":
     citizen_refresh(STARTING_PULL)
     
